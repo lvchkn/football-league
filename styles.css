@@ -1,0 +1,181 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    gap: 30px;
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+
+.standings-section {
+    flex: 0 0 auto;
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+    min-width: 300px;
+}
+
+.fixtures-section {
+    flex: 1;
+    min-width: 300px;
+}
+
+table {
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 550px;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+#standings {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 13px;
+}
+
+/* Sticky header: the container that scrolls is .standings-section */
+#standings thead th {
+    position: sticky;
+    top: 0;
+    background: #eee;
+    z-index: 2;
+}
+
+#standings th,
+#standings td {
+    padding: 4px 6px;
+    word-break: break-word;
+    border: 1px solid #ccc;
+    text-align: center;
+    font-size: 13px;
+}
+
+#standings th:nth-child(1),
+#standings td:nth-child(1) {
+    width: 30px;
+}
+
+#standings th:nth-child(2),
+#standings td:nth-child(2) {
+    width: 120px;
+}
+
+#standings th:nth-child(n + 3),
+#standings td:nth-child(n + 3) {
+    width: 50px;
+}
+
+/* Scope general table cell styles to tables other than #standings */
+table:not(#standings) th,
+table:not(#standings) td {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+    text-align: center;
+    font-size: 18px;
+}
+
+th {
+    background: #eee;
+}
+
+.matchday {
+    margin-top: 30px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.matchday h3 {
+    text-align: center;
+    margin: 0 0 15px 0;
+}
+
+.apply-all-btn {
+    display: block;
+    margin: 15px auto 0;
+}
+
+.match {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1024px) {
+    body {
+        margin: 10px;
+    }
+
+    .container {
+        gap: 20px;
+        flex-direction: column;
+    }
+
+    .standings-section {
+        position: static;
+        /* keep a max-height so the standings can scroll and thead sticky works */
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .fixtures-section {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        margin: 10px;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    #standings th,
+    #standings td {
+        padding: 3px 4px;
+        font-size: 11px;
+    }
+
+    #standings th:nth-child(2),
+    #standings td:nth-child(2) {
+        width: 80px;
+    }
+
+    #standings th:nth-child(n + 3),
+    #standings td:nth-child(n + 3) {
+        width: 40px;
+    }
+
+    .matchday {
+        padding: 10px;
+        margin-top: 20px;
+    }
+
+    .match {
+        gap: 5px;
+        padding: 4px 0;
+    }
+
+    .match input,
+    .match button {
+        font-size: 12px;
+        padding: 4px 6px;
+    }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Fantasy Premier League Simulator</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <h1>Fantasy League Simulator</h1>
+
+        <div class="container">
+            <div class="standings-section">
+                <h2>Standings</h2>
+                <table id="standings">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Team</th>
+                            <th>Played</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th>GF</th>
+                            <th>GA</th>
+                            <th>GD</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="fixtures-section">
+                <h2>
+                    Fixtures
+                    <button id="save-btn" style="margin-left: 12px">
+                        Save
+                    </button>
+                    <button id="reset-btn" style="margin-left: 6px">
+                        Reset
+                    </button>
+                </h2>
+                <div id="fixtures"></div>
+            </div>
+        </div>
+
+        <script src="scripts/teams.js"></script>
+        <script src="scripts/fixtures.js"></script>
+        <script src="scripts/table.js"></script>
+        <script src="scripts/ui.js"></script>
+        <script src="scripts/storage.js"></script>
+        <script src="scripts/app.js"></script>
+    </body>
+</html>
