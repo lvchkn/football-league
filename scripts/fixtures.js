@@ -5,7 +5,7 @@
  */
 function generateFixtures(teamNames) {
     const n = teamNames.length;
-    const arr = teamNames.slice();
+    let arr = teamNames.slice();
     if (n % 2 === 1) arr.push(null); // ghost team if odd number
     const rounds = arr.length - 1;
     const mid = arr.length / 2;
