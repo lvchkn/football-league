@@ -4,10 +4,44 @@ body {
     padding: 0;
 }
 
+label[for="league-selector"] {
+    display: block;
+    margin: 20px auto 10px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+#league-selector {
+    display: block;
+    margin: 0 auto 30px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 250px;
+    outline: none;
+}
+
+#league-selector:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.1);
+}
+
+#league-selector:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 .container {
     display: flex;
     gap: 30px;
-    max-width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     flex-wrap: wrap;
 }
 
@@ -23,7 +57,7 @@ body {
 
 .fixtures-section {
     flex: 1;
-    min-width: 300px;
+    min-width: 350px;
 }
 
 table {

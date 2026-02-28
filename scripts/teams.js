@@ -210,6 +210,38 @@ const greekTeams = [
     "Levadiakos",
 ];
 
-const teams = englishTeams;
+/**
+ * Get teams by league name.
+ * @param {string} league - The name of the league.
+ * @returns {Array<string>} An array of team names in the specified league.
+ */
+function getTeamsByLeague(league) {
+    switch (league) {
+        case "english":
+            return englishTeams;
+        case "french":
+            return frenchTeams;
+        case "german":
+            return germanTeams;
+        case "italian":
+            return italianTeams;
+        case "spanish":
+            return spanishTeams;
+        case "russian":
+            return russianTeams;
+        case "dutch":
+            return dutchTeams;
+        case "belgian":
+            return belgianTeams;
+        case "serbian":
+            return serbianTeams;
+        case "greek":
+            return greekTeams;
+        default:
+            return [];
+    }
+}
 
-window.FootballLeague.teams = teams;
+Object.assign(window.FootballLeague, {
+    getTeamsByLeague,
+});
