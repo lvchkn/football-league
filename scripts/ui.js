@@ -110,15 +110,7 @@ function renderFixtures(fixtures, onResultApplied) {
         container.appendChild(div);
     });
 
-    if (
-        window.FootballLeague &&
-        typeof window.FootballLeague.setupPersistenceControls === "function"
-    ) {
-        window.FootballLeague.setupPersistenceControls(
-            fixtures,
-            onResultApplied,
-        );
-    }
+    _setupPersistenceControls(fixtures, onResultApplied);
 }
 
 /**
@@ -148,10 +140,11 @@ function _getHomeAndAwayGoals(hgVal, agVal) {
  * @param {Array} fixtures - fixtures array to persist
  * @param {Function} onResultApplied - callback to invoke after reset/save actions
  */
-function setupPersistenceControls(fixtures, onResultApplied) {
+function _setupPersistenceControls(fixtures, onResultApplied) {
     const saveBtn = document.getElementById("save-btn");
     const resetBtn = document.getElementById("reset-btn");
     const regenerateBtn = document.getElementById("regenerate-btn");
+    const currentLeague = window.FootballLeague.selectedLeague;
 
     if (saveBtn) {
         saveBtn.onclick = function () {
@@ -162,6 +155,7 @@ function setupPersistenceControls(fixtures, onResultApplied) {
             ) {
                 window.FootballLeague.StorageModule.saveFixturesImmediate(
                     fixtures,
+                    currentLeague,
                 );
                 const prev = saveBtn.textContent;
                 saveBtn.textContent = "Saved";
@@ -177,7 +171,9 @@ function setupPersistenceControls(fixtures, onResultApplied) {
                 window.FootballLeague.StorageModule &&
                 window.FootballLeague.StorageModule.clearSavedFixtures
             ) {
-                window.FootballLeague.StorageModule.clearSavedFixtures();
+                window.FootballLeague.StorageModule.clearSavedFixtures(
+                    currentLeague,
+                );
             }
 
             fixtures.forEach((round) =>
@@ -246,9 +242,36 @@ if (document.readyState === "loading") {
     setupScrollToTopButton();
 }
 
+/**
+ * Subscribe to league selection changes
+ * @param {Function} onChange - callback to invoke when league selection changes
+ * @return {void}
+ */
+function subscribeToLeagueChange(onChange) {
+    const selector = document.getElementById("league-selector");
+    if (!selector) return;
+
+    selector.addEventListener("change", (e) => {
+        if (typeof onChange === "function") {
+            onChange(e.target.value);
+        }
+    });
+}
+
+/**
+ * Update the league selector dropdown to match the current selected league
+ * @param {string} league - currently selected league
+ * @return {void}
+ */
+function updateLeagueSelector(league) {
+    const selector = document.getElementById("league-selector");
+    if (selector) selector.value = league;
+}
+
 Object.assign(window.FootballLeague, {
     renderTable,
     renderFixtures,
-    setupPersistenceControls,
     setupScrollToTopButton,
+    subscribeToLeagueChange,
+    updateLeagueSelector,
 });
