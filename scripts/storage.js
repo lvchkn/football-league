@@ -13,20 +13,20 @@
 
     /**
      * Get the storage key for fixtures of a specific league.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {string}
      */
-    function _getFixturesKey(leagueId) {
-        return `${FIXTURES_KEY_PREFIX}${leagueId || "english"}`;
+    function _getFixturesKey(league) {
+        return `${FIXTURES_KEY_PREFIX}${league || "english"}`;
     }
 
     /**
      * Get the storage key for fixture structure of a specific league.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {string}
      */
-    function _getStructureKey(leagueId) {
-        return `${FIXTURES_STRUCTURE_KEY_PREFIX}${leagueId || "english"}`;
+    function _getStructureKey(league) {
+        return `${FIXTURES_STRUCTURE_KEY_PREFIX}${league || "english"}`;
     }
 
     /**
@@ -50,12 +50,12 @@
 
     /**
      * Load persisted minimal results from localStorage.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {Array<Array<Object|null>>|null}
      */
-    function readFixtures(leagueId) {
+    function getFixtures(league) {
         try {
-            const fixtures = localStorage.getItem(_getFixturesKey(leagueId));
+            const fixtures = localStorage.getItem(_getFixturesKey(league));
             if (!fixtures) return null;
             return JSON.parse(fixtures);
         } catch (e) {
@@ -66,13 +66,13 @@
     /**
      * Write fixtures to localStorage (sync).
      * @param {Array<Array<Object|null>>} fixtures
-     * @param {string} leagueId
+     * @param {string} league
      * @return {boolean}
      */
-    function _writeFixtures(fixtures, leagueId) {
+    function _setFixtures(fixtures, league) {
         try {
             localStorage.setItem(
-                _getFixturesKey(leagueId),
+                _getFixturesKey(league),
                 JSON.stringify(fixtures),
             );
             return true;
@@ -84,14 +84,14 @@
     /**
      * Debounced save: accept full fixtures, extract minimal and persist later.
      * @param {Array<Array<Object>>} fixtures
-     * @param {string} leagueId
+     * @param {string} league
      * @return {void}
      */
-    function saveFixturesDebounced(fixtures, leagueId) {
+    function setFixturesDebounced(fixtures, league) {
         if (pending) clearTimeout(pending);
         const minimal = _extractMinimal(fixtures);
         pending = setTimeout(() => {
-            _writeFixtures(minimal, leagueId);
+            _setFixtures(minimal, league);
             pending = null;
         }, DEBOUNCE_MS);
     }
@@ -99,29 +99,29 @@
     /**
      * Immediate save (cancels debounce) of full fixtures.
      * @param {Array<Array<Object>>} fixtures
-     * @param {string} leagueId
+     * @param {string} league
      * @return {boolean}
      */
-    function saveFixturesImmediate(fixtures, leagueId) {
+    function setFixturesImmediate(fixtures, league) {
         if (pending) {
             clearTimeout(pending);
             pending = null;
         }
-        return _writeFixtures(_extractMinimal(fixtures), leagueId);
+        return _setFixtures(_extractMinimal(fixtures), league);
     }
 
     /**
      * Clear persisted fixtures from storage.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {void}
      */
-    function clearSavedFixtures(leagueId) {
+    function clearSavedFixtures(league) {
         if (pending) {
             clearTimeout(pending);
             pending = null;
         }
         try {
-            localStorage.removeItem(_getFixturesKey(leagueId));
+            localStorage.removeItem(_getFixturesKey(league));
         } catch (e) {
             return;
         }
@@ -130,10 +130,10 @@
     /**
      * Save the fixtures structure (matchups) without results to localStorage.
      * @param {Array<Array<Object>>} fixtures
-     * @param {string} leagueId
+     * @param {string} league
      * @return {boolean}
      */
-    function writeFixturesStructure(fixtures, leagueId) {
+    function setFixturesStructure(fixtures, league) {
         try {
             const structure = fixtures.map((round) =>
                 round.map((match) => ({
@@ -142,7 +142,7 @@
                 })),
             );
             localStorage.setItem(
-                _getStructureKey(leagueId),
+                _getStructureKey(league),
                 JSON.stringify(structure),
             );
             return true;
@@ -153,12 +153,12 @@
 
     /**
      * Load the fixture structure from localStorage.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {Array<Array<Object>>|null}
      */
-    function readFixturesStructure(leagueId) {
+    function getFixturesStructure(league) {
         try {
-            const structure = localStorage.getItem(_getStructureKey(leagueId));
+            const structure = localStorage.getItem(_getStructureKey(league));
             if (!structure) return null;
             return JSON.parse(structure);
         } catch (e) {
@@ -168,17 +168,17 @@
 
     /**
      * Clear both fixtures structure and results for a league.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {void}
      */
-    function clearAll(leagueId) {
+    function clearAll(league) {
         if (pending) {
             clearTimeout(pending);
             pending = null;
         }
         try {
-            localStorage.removeItem(_getFixturesKey(leagueId));
-            localStorage.removeItem(_getStructureKey(leagueId));
+            localStorage.removeItem(_getFixturesKey(league));
+            localStorage.removeItem(_getStructureKey(league));
         } catch (e) {
             return;
         }
@@ -194,20 +194,20 @@
 
     /**
      * Set the currently active league ID in storage.
-     * @param {string} leagueId
+     * @param {string} league
      * @return {void}
      */
-    function setSelectedLeague(leagueId) {
-        localStorage.setItem(SELECTED_LEAGUE_KEY, leagueId);
+    function setSelectedLeague(league) {
+        localStorage.setItem(SELECTED_LEAGUE_KEY, league);
     }
 
     window.FootballLeague.StorageModule = {
-        readFixtures,
-        saveFixturesDebounced,
-        saveFixturesImmediate,
+        getFixtures,
+        setFixturesDebounced,
+        setFixturesImmediate,
         clearSavedFixtures,
-        writeFixturesStructure,
-        readFixturesStructure,
+        setFixturesStructure,
+        getFixturesStructure,
         clearAll,
         getSelectedLeague,
         setSelectedLeague,

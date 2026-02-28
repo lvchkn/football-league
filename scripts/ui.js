@@ -151,9 +151,9 @@ function _setupPersistenceControls(fixtures, onResultApplied) {
             if (
                 window.FootballLeague &&
                 window.FootballLeague.StorageModule &&
-                window.FootballLeague.StorageModule.saveFixturesImmediate
+                window.FootballLeague.StorageModule.setFixturesImmediate
             ) {
-                window.FootballLeague.StorageModule.saveFixturesImmediate(
+                window.FootballLeague.StorageModule.setFixturesImmediate(
                     fixtures,
                     currentLeague,
                 );

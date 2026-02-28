@@ -35,10 +35,10 @@ function initializeFixtures(league) {
     if (
         window.FootballLeague &&
         window.FootballLeague.StorageModule &&
-        window.FootballLeague.StorageModule.readFixturesStructure
+        window.FootballLeague.StorageModule.getFixturesStructure
     ) {
         structure =
-            window.FootballLeague.StorageModule.readFixturesStructure(league);
+            window.FootballLeague.StorageModule.getFixturesStructure(league);
     }
 
     if (structure) {
@@ -57,9 +57,9 @@ function initializeFixtures(league) {
         if (
             window.FootballLeague &&
             window.FootballLeague.StorageModule &&
-            window.FootballLeague.StorageModule.writeFixturesStructure
+            window.FootballLeague.StorageModule.setFixturesStructure
         ) {
-            window.FootballLeague.StorageModule.writeFixturesStructure(
+            window.FootballLeague.StorageModule.setFixturesStructure(
                 fixtures,
                 league,
             );
@@ -71,8 +71,8 @@ function initializeFixtures(league) {
         const savedFixtures =
             window.FootballLeague &&
             window.FootballLeague.StorageModule &&
-            window.FootballLeague.StorageModule.readFixtures &&
-            window.FootballLeague.StorageModule.readFixtures(league);
+            window.FootballLeague.StorageModule.getFixtures &&
+            window.FootballLeague.StorageModule.getFixtures(league);
 
         if (savedFixtures && Array.isArray(savedFixtures)) {
             for (
@@ -125,9 +125,9 @@ function regenerateFixtures() {
     if (
         window.FootballLeague &&
         window.FootballLeague.StorageModule &&
-        window.FootballLeague.StorageModule.writeFixturesStructure
+        window.FootballLeague.StorageModule.setFixturesStructure
     ) {
-        window.FootballLeague.StorageModule.writeFixturesStructure(
+        window.FootballLeague.StorageModule.setFixturesStructure(
             fixtures,
             selectedLeague,
         );
@@ -139,9 +139,9 @@ function regenerateFixtures() {
         if (
             window.FootballLeague &&
             window.FootballLeague.StorageModule &&
-            window.FootballLeague.StorageModule.saveFixturesDebounced
+            window.FootballLeague.StorageModule.setFixturesDebounced
         ) {
-            window.FootballLeague.StorageModule.saveFixturesDebounced(
+            window.FootballLeague.StorageModule.setFixturesDebounced(
                 fixtures,
                 selectedLeague,
             );
@@ -178,9 +178,9 @@ function start() {
         if (
             window.FootballLeague &&
             window.FootballLeague.StorageModule &&
-            window.FootballLeague.StorageModule.saveFixturesDebounced
+            window.FootballLeague.StorageModule.setFixturesDebounced
         ) {
-            window.FootballLeague.StorageModule.saveFixturesDebounced(
+            window.FootballLeague.StorageModule.setFixturesDebounced(
                 fixtures,
                 selectedLeague,
             );
@@ -207,9 +207,9 @@ function start() {
             if (
                 window.FootballLeague &&
                 window.FootballLeague.StorageModule &&
-                window.FootballLeague.StorageModule.saveFixturesDebounced
+                window.FootballLeague.StorageModule.setFixturesDebounced
             ) {
-                window.FootballLeague.StorageModule.saveFixturesDebounced(
+                window.FootballLeague.StorageModule.setFixturesDebounced(
                     fixtures,
                     selectedLeague,
                 );
