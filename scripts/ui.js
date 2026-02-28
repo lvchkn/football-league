@@ -68,8 +68,13 @@ function renderFixtures(fixtures, onResultApplied) {
 
                 if (hgVal === "" || agVal === "") return;
 
-                match.homeGoals = parseInt(hgVal, 10);
-                match.awayGoals = parseInt(agVal, 10);
+                const { homeGoals, awayGoals } = _getHomeAndAwayGoals(
+                    hgVal,
+                    agVal,
+                );
+
+                match.homeGoals = homeGoals;
+                match.awayGoals = awayGoals;
 
                 onResultApplied();
             });
@@ -89,8 +94,13 @@ function renderFixtures(fixtures, onResultApplied) {
 
                 if (hgVal === "" || agVal === "") return;
 
-                match.homeGoals = parseInt(hgVal, 10);
-                match.awayGoals = parseInt(agVal, 10);
+                const { homeGoals, awayGoals } = _getHomeAndAwayGoals(
+                    hgVal,
+                    agVal,
+                );
+
+                match.homeGoals = homeGoals;
+                match.awayGoals = awayGoals;
             });
 
             onResultApplied();
@@ -110,6 +120,28 @@ function renderFixtures(fixtures, onResultApplied) {
             onResultApplied,
         );
     }
+}
+
+/**
+ * Get home and away goals from input values, with validation
+ * @param {string} hgVal - home goals input value
+ * @param {string} agVal - away goals input value
+ * @return {Object|undefined} {homeGoals, awayGoals} or undefined if invalid
+ */
+function _getHomeAndAwayGoals(hgVal, agVal) {
+    if (hgVal === "" || agVal === "") return;
+
+    const hg = Number(hgVal);
+    const ag = Number(agVal);
+
+    if (!Number.isInteger(hg) || !Number.isInteger(ag) || hg < 0 || ag < 0) {
+        return;
+    }
+
+    return {
+        homeGoals: hg,
+        awayGoals: ag,
+    };
 }
 
 /**

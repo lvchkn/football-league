@@ -46,10 +46,12 @@ function initializeFixtures() {
                 awayGoals: null,
             })),
         );
+        window.FootballLeague.fixtures = fixtures;
     } else {
         fixtures = window.FootballLeague.generateFixtures(
             window.FootballLeague.teams,
         );
+        window.FootballLeague.fixtures = fixtures;
         if (
             window.FootballLeague &&
             window.FootballLeague.StorageModule &&
@@ -117,6 +119,7 @@ function regenerateFixtures() {
     fixtures = window.FootballLeague.generateFixtures(
         window.FootballLeague.teams,
     );
+    window.FootballLeague.fixtures = fixtures;
 
     if (
         window.FootballLeague &&
@@ -147,11 +150,10 @@ function start() {
     initializeFixtures();
 
     recalcTable();
-    window.FootballLeague.renderTable(table);
 
     window.FootballLeague.renderFixtures(fixtures, () => {
         recalcTable();
-        window.FootballLeague.renderTable(table);
+
         if (
             window.FootballLeague &&
             window.FootballLeague.StorageModule &&
