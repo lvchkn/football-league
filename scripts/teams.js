@@ -1,7 +1,6 @@
-/**
- * Football league teams
- */
-const teams = [
+window.FootballLeague = window.FootballLeague || {};
+
+const englishTeams = [
     "Arsenal",
     "Aston Villa",
     "Bournemouth",
@@ -23,3 +22,194 @@ const teams = [
     "Burnley",
     "Wolverhampton",
 ];
+
+const frenchTeams = [
+    "Paris Saint-Germain",
+    "Marseille",
+    "Monaco",
+    "Lyon",
+    "Lille",
+    "Rennes",
+    "Nice",
+    "Brest",
+    "Le Havre",
+    "Strasbourg",
+    "Angers",
+    "Lens",
+    "Toulouse",
+    "Auxerre",
+    "Nantes",
+    "Metz",
+    "Lorient",
+    "Paris FC",
+];
+
+const germanTeams = [
+    "Bayern Munich",
+    "Borussia Dortmund",
+    "Hoffenheim",
+    "RB Leipzig",
+    "VfB Stuttgart",
+    "Bayer Leverkusen",
+    "SC Freiburg",
+    "Union Berlin",
+    "Eintracht Frankfurt",
+    "1. FC Köln",
+    "Hamburg SV",
+    "Borussia Mönchengladbach",
+    "Mainz 05",
+    "FC Augsburg",
+    "VfL Wolfsburg",
+    "Werder Bremen",
+    "Sankt Pauli",
+    "Heidenheim",
+];
+
+const italianTeams = [
+    "Inter Milan",
+    "AC Milan",
+    "Napoli",
+    "Juventus",
+    "Roma",
+    "Como",
+    "Lazio",
+    "Atalanta",
+    "Fiorentina",
+    "Sassuolo",
+    "Udinese",
+    "Bologna",
+    "Cagliari",
+    "Cremonese",
+    "Genoa",
+    "Parma",
+    "Torino",
+    "Lecce",
+    "Verona",
+    "Pisa",
+];
+
+const spanishTeams = [
+    "Real Madrid",
+    "Barcelona",
+    "Atlético Madrid",
+    "Sevilla",
+    "Real Sociedad",
+    "Villarreal",
+    "Real Betis",
+    "Celta Vigo",
+    "Espanyol",
+    "Athletic Bilbao",
+    "Osasuna",
+    "Girona",
+    "Getafe",
+    "Valencia",
+    "Mallorca",
+    "Elche",
+    "Alavés",
+    "Rayo Vallecano",
+    "Real Oviedo",
+    "Levante",
+];
+
+const russianTeams = [
+    "Zenit Saint Petersburg",
+    "CSKA Moscow",
+    "Spartak Moscow",
+    "Lokomotiv Moscow",
+    "Krasnodar",
+    "Dynamo Moscow",
+    "Rostov",
+    "Rubin Kazan",
+    "Ufa",
+    "Orenburg",
+    "Sochi",
+    "Nizhny Novgorod",
+    "Khimki",
+    "Arsenal Tula",
+    "Tambov",
+    "Yenisey Krasnoyarsk",
+    "Rotor Volgograd",
+    "Krylia Sovetov",
+    "Torpedo Moscow",
+    "Shinnik Yaroslavl",
+];
+
+const dutchTeams = [
+    "Ajax",
+    "PSV Eindhoven",
+    "Feyenoord",
+    "AZ Alkmaar",
+    "Heracles Almelo",
+    "Utrecht",
+    "Twente",
+    "Heerenveen",
+    "Groningen",
+    "Sparta Rotterdam",
+    "PEC Zwolle",
+    "Fortuna Sittard",
+    "NEC Nijmegen",
+    "Excelsior Rotterdam",
+    "Telstar",
+    "Go Ahead Eagles",
+    "NAC Breda",
+    "Volendam",
+];
+
+const belgianTeams = [
+    "Club Brugge",
+    "RSC Anderlecht",
+    "KAA Gent",
+    "Standard Liège",
+    "KRC Genk",
+    "Royal Antwerp",
+    "Charleroi",
+    "KV Mechelen",
+    "St. Truiden",
+    "Zulte Waregem",
+    "Cercle Brugge",
+    "Oud-Heverlee Leuven",
+    "RAAL La Louvière",
+    "Dender",
+    "Royale Union Saint-Gilloise",
+    "Westerlo",
+];
+
+const serbianTeams = [
+    "Crvena Zvezda",
+    "Partizan",
+    "Vojvodina",
+    "Čukarički",
+    "Radnički Niš",
+    "Radnik Surdulica",
+    "Radnički Kragujevac",
+    "Spartak Subotica",
+    "Mladost Lučani",
+    "Zeleznicar",
+    "Novi Pazar",
+    "IMT",
+    "Napredak Kruševac",
+    "Javor Ivanjica",
+    "TSC Bačka Topola",
+    "OFK",
+];
+
+const greekTeams = [
+    "Olympiacos",
+    "Panathinaikos",
+    "AEK Athens",
+    "PAOK",
+    "Aris Thessaloniki",
+    "Atromitos",
+    "OFI Crete",
+    "Volos",
+    "AE Larissa",
+    "Panetolikos",
+    "Asteras Tripolis",
+    "Panserraikos",
+    "Kifisia",
+    "Levadiakos",
+];
+
+const teams = englishTeams;
+
+window.FootballLeague.teams = teams;

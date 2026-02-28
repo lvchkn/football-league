@@ -1,15 +1,13 @@
-/**
- * League table state
- */
-let table = {};
+window.FootballLeague = window.FootballLeague || {};
 
 /**
  * Initialize empty league table
  * @param {string[]} teams - array of team names
- * @return {void}
+ * @return {Object} table
  */
 function initTable(teams) {
-    table = {};
+    const table = {};
+
     teams.forEach((t) => {
         table[t] = {
             team: t,
@@ -23,17 +21,20 @@ function initTable(teams) {
             points: 0,
         };
     });
+
+    return table;
 }
 
 /**
  * Apply match result to the league table
- * @param {Object} match - match object with home, away, hg, ag
+ * @param {Object} match - match object with home, away, homeGoals, awayGoals
+ * @param {Object} table - league table
  * @return {void}
  */
-function applyMatchResult(match) {
-    const { home, away, hg, ag } = match;
+function applyMatchResult(match, table) {
+    const { home, away, homeGoals, awayGoals } = match;
 
-    if (hg === null || ag === null) return; // ignore incomplete
+    if (homeGoals === null || awayGoals === null) return; // ignore incomplete
 
     const homeRow = table[home];
     const awayRow = table[away];
@@ -41,17 +42,17 @@ function applyMatchResult(match) {
     homeRow.played++;
     awayRow.played++;
 
-    homeRow.gf += hg;
-    homeRow.ga += ag;
+    homeRow.gf += homeGoals;
+    homeRow.ga += awayGoals;
 
-    awayRow.gf += ag;
-    awayRow.ga += hg;
+    awayRow.gf += awayGoals;
+    awayRow.ga += homeGoals;
 
-    if (hg > ag) {
+    if (homeGoals > awayGoals) {
         homeRow.points += 3;
         homeRow.wins++;
         awayRow.losses++;
-    } else if (hg < ag) {
+    } else if (homeGoals < awayGoals) {
         awayRow.points += 3;
         awayRow.wins++;
         homeRow.losses++;
@@ -65,9 +66,10 @@ function applyMatchResult(match) {
 
 /**
  * Get sorted table standings
+ * @param {Object} table - league table
  * @return {Array} - sorted array of team standings
  */
-function getSortedTable() {
+function sortTable(table) {
     return Object.values(table).sort((a, b) => {
         if (b.points !== a.points) {
             return b.points - a.points;
@@ -83,3 +85,9 @@ function getSortedTable() {
         return b.gf - a.gf;
     });
 }
+
+Object.assign(window.FootballLeague, {
+    initTable,
+    applyMatchResult,
+    sortTable,
+});

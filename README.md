@@ -4,11 +4,11 @@ A lightweight, browser-based fantasy football league simulator. Generate fixture
 
 ## Features
 
--   **Round-robin fixture generation**: Automatically generates a double round-robin schedule for any number of teams (uses the circle method for fair pairings).
--   **Real-time standings**: League table updates instantly as you enter and apply match results, sorted by points, goal difference, and goals for.
--   **Persistent results**: All match scores are automatically saved to browser storage (debounced). Reload the page — your data survives.
--   **Save & Reset controls**: Manually save results or clear all data with dedicated buttons.
--   **No backend required**: Runs entirely in the browser with vanilla JavaScript.
+- **Round-robin fixture generation**: Automatically generates a double round-robin schedule for any number of teams (uses the circle method for fair pairings).
+- **Real-time standings**: League table updates instantly as you enter and apply match results, sorted by points, goal difference, and goals for.
+- **Persistent results**: All match scores are automatically saved to browser storage (debounced). The data survives page reloads.
+- **Save & Reset controls**: Manually save results or clear all data with dedicated buttons.
+- **No backend required**: Runs entirely in the browser with vanilla JavaScript.
 
 ## How to Use
 
@@ -20,4 +20,4 @@ A lightweight, browser-based fantasy football league simulator. Generate fixture
     - Or click **Apply all results** to apply all matches in a matchday at once.
 4. Click **Save** to force an immediate save (otherwise results autosave after 300ms of inactivity).
 5. Click **Reset** to clear all saved results and start fresh.
-6. Reload the page — your results persist.
+6. Reload the page, your results persist.

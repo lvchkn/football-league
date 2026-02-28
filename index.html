@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -37,18 +37,29 @@
                         Save
                     </button>
                     <button id="reset-btn" style="margin-left: 6px">
-                        Reset
+                        Reset scores
+                    </button>
+                    <button id="regenerate-btn" style="margin-left: 6px">
+                        Regenerate fixtures
                     </button>
                 </h2>
                 <div id="fixtures"></div>
             </div>
         </div>
 
+        <button
+            id="scroll-to-top"
+            class="scroll-to-top"
+            aria-label="Scroll to top"
+        >
+            ↑
+        </button>
+
         <script src="scripts/teams.js"></script>
         <script src="scripts/fixtures.js"></script>
         <script src="scripts/table.js"></script>
         <script src="scripts/ui.js"></script>
         <script src="scripts/storage.js"></script>
-        <script src="scripts/app.js"></script>
+        <script defer src="scripts/app.js"></script>
     </body>
 </html>
