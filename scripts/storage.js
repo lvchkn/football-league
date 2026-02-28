@@ -189,16 +189,25 @@
      * @return {string|null}
      */
     function getSelectedLeague() {
-        return localStorage.getItem(SELECTED_LEAGUE_KEY);
+        try {
+            return localStorage.getItem(SELECTED_LEAGUE_KEY);
+        } catch (e) {
+            return null;
+        }
     }
 
     /**
      * Set the currently active league ID in storage.
      * @param {string} league
-     * @return {void}
+     * @return {boolean}
      */
     function setSelectedLeague(league) {
-        localStorage.setItem(SELECTED_LEAGUE_KEY, league);
+        try {
+            localStorage.setItem(SELECTED_LEAGUE_KEY, league);
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     window.FootballLeague.StorageModule = {
