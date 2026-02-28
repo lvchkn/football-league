@@ -68,11 +68,10 @@ function renderFixtures(fixtures, onResultApplied) {
 
                 if (hgVal === "" || agVal === "") return;
 
-                const { homeGoals, awayGoals } = _getHomeAndAwayGoals(
-                    hgVal,
-                    agVal,
-                );
+                const parsedInput = _getHomeAndAwayGoals(hgVal, agVal);
+                if (!parsedInput) return;
 
+                const { homeGoals, awayGoals } = parsedInput;
                 match.homeGoals = homeGoals;
                 match.awayGoals = awayGoals;
 
@@ -94,11 +93,11 @@ function renderFixtures(fixtures, onResultApplied) {
 
                 if (hgVal === "" || agVal === "") return;
 
-                const { homeGoals, awayGoals } = _getHomeAndAwayGoals(
-                    hgVal,
-                    agVal,
-                );
+                const parsedInput = _getHomeAndAwayGoals(hgVal, agVal);
 
+                if (!parsedInput) return;
+
+                const { homeGoals, awayGoals } = parsedInput;
                 match.homeGoals = homeGoals;
                 match.awayGoals = awayGoals;
             });
