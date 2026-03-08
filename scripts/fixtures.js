@@ -22,8 +22,9 @@ function _shuffleArray(array) {
  * @returns {Array} - array of rounds, each round is array of matches
  */
 function generateFixtures(teamNames) {
-    const n = teamNames.length;
-    let arr = teamNames.slice();
+    const teams = _shuffleArray(teamNames);
+    const n = teams.length;
+    let arr = teams.slice();
 
     if (n % 2 === 1) arr.push(null); // ghost team if odd number
 
@@ -39,6 +40,14 @@ function generateFixtures(teamNames) {
             const away = arr[arr.length - 1 - matchIndex];
             if (home && away) {
                 matches.push({ home, away, homeGoals: null, awayGoals: null });
+            }
+        }
+
+        // randomly flip home/away for each match to avoid one-sided home schedule
+        for (let i = 0; i < matches.length; i++) {
+            if (Math.random() < 0.5) {
+                const m = matches[i];
+                [m.home, m.away] = [m.away, m.home];
             }
         }
 
@@ -59,9 +68,7 @@ function generateFixtures(teamNames) {
         })),
     );
 
-    const secondHalfShuffled = secondHalf.map((round) => _shuffleArray(round));
-
-    const allMatches = [...firstHalf, ...secondHalfShuffled];
+    const allMatches = [...firstHalf, ...secondHalf];
 
     return allMatches;
 }

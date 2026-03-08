@@ -210,6 +210,27 @@ const greekTeams = [
     "Levadiakos",
 ];
 
+const turkishTeams = [
+    "Galatasaray",
+    "Fenerbahçe",
+    "Beşiktaş",
+    "Trabzonspor",
+    "Başakşehir",
+    "Konyaspor",
+    "Alanyaspor",
+    "Göztepe",
+    "Antalyaspor",
+    "Kayserispor",
+    "Gaziantep FK",
+    "Kasımpaşa",
+    "Eyüpspor",
+    "Karagümrük",
+    "Gençlerbirliği",
+    "Rizespor",
+    "Kocaelispor",
+    "Samsunspor",
+];
+
 /**
  * Get teams by league name.
  * @param {string} league - The name of the league.
@@ -237,6 +258,8 @@ function getTeamsByLeague(league) {
             return serbianTeams;
         case "greek":
             return greekTeams;
+        case "turkish":
+            return turkishTeams;
         default:
             return [];
     }

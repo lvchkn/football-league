@@ -119,7 +119,7 @@ function regenerateFixtures() {
         window.FootballLeague.StorageModule.clearAll(selectedLeague);
     }
 
-    fixtures = window.FootballLeague.generateFixtures(teams);
+    fixtures = window.FootballLeague.generateFixtures(_shuffleArray(teams));
     window.FootballLeague.fixtures = fixtures;
 
     if (
