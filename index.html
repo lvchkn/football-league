@@ -10,17 +10,24 @@
 
         <label for="league-selector">Choose a league:</label>
         <select id="league-selector" aria-label="Select league">
-            <option value="english" selected>English Premier League</option>
-            <option value="spanish">Spanish La Liga</option>
-            <option value="italian">Italian Serie A</option>
-            <option value="german">German Bundesliga</option>
-            <option value="french">French Ligue 1</option>
-            <option value="dutch">Dutch Eredivisie</option>
-            <option value="belgian">Belgian Pro League</option>
-            <option value="russian">Russian Premier League</option>
-            <option value="serbian">Serbian SuperLiga</option>
-            <option value="greek">Greek Super League</option>
-            <option value="turkish">Turkish Süper Lig</option>
+            <optgroup label="Domestic Leagues">
+                <option value="english" selected>English Premier League</option>
+                <option value="spanish">Spanish La Liga</option>
+                <option value="italian">Italian Serie A</option>
+                <option value="german">German Bundesliga</option>
+                <option value="french">French Ligue 1</option>
+                <option value="dutch">Dutch Eredivisie</option>
+                <option value="belgian">Belgian Pro League</option>
+                <option value="russian">Russian Premier League</option>
+                <option value="serbian">Serbian SuperLiga</option>
+                <option value="greek">Greek Super League</option>
+                <option value="turkish">Turkish Süper Lig</option>
+            </optgroup>
+            <optgroup label="UEFA Competitions">
+                <option value="ucl">UEFA Champions League</option>
+                <option value="el">UEFA Europa League</option>
+                <option value="cl">UEFA Conference League</option>
+            </optgroup>
         </select>
 
         <div class="container">
@@ -75,6 +82,11 @@
         <script src="scripts/table.js"></script>
         <script src="scripts/ui.js"></script>
         <script src="scripts/storage.js"></script>
+        <script src="scripts/uefa/teams.js"></script>
+        <script src="scripts/uefa/fixtures.js"></script>
+        <script src="scripts/uefa/table.js"></script>
+        <script src="scripts/uefa/ui.js"></script>
+        <script src="scripts/uefa/storage.js"></script>
         <script defer src="scripts/app.js"></script>
     </body>
 </html>
