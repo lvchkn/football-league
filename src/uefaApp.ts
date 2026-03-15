@@ -430,6 +430,7 @@ export function progressPhase(): void {
 
     uefaStorage.setPhase(competition, nextPhase);
     uefaStorage.setFixturesStructure(fixtures as Round[], competition);
+    uefaStorage.setFixturesImmediate(fixtures as Round[], competition);
 
     recalcTable();
     renderAllFixtures();
