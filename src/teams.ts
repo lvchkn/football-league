@@ -299,7 +299,7 @@ const turkishLeague: League = {
  * @param {string} league - The name of the league.
  * @returns {Teams} An array of team names in the specified league.
  */
-export function getTeamsByLeague(league: string): Teams {
+export function getTeamsByLeague(league: LeagueList): Teams {
     switch (league) {
         case englishLeague.key:
             return englishLeague.teams;

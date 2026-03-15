@@ -44,6 +44,8 @@ export function applyMatchResult(match: Match, table: Table): void {
     const homeRow = table[homeTeam];
     const awayRow = table[awayTeam];
 
+    if (!homeRow || !awayRow) return;
+
     homeRow.played++;
     awayRow.played++;
 

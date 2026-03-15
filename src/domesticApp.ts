@@ -18,7 +18,7 @@ let league: LeagueList = "english";
  */
 function recalcTable(): void {
     table = initTable(teams);
-    fixtures.map((round: LeagueRound) =>
+    fixtures.forEach((round: LeagueRound) =>
         round.matches.forEach(function (match: LeagueMatch) {
             applyMatchResult(match, table);
         }),

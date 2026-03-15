@@ -292,35 +292,37 @@ export function generateUEFAFixtures(
     phase: Phase,
     context: UEFAContext,
 ): LeaguePhase | KnockoutRound | Match {
-    // if (teamNames.length === 0) {
-    //     throw new Error("No teams provided for fixture generation.");
-    // }
-
     phase = phase || "league";
     context = context || {};
 
     switch (phase) {
-        case "league":
+        case "league": {
             return generateLeagueFixtures(teamNames);
-        case "playoffs":
+        }
+        case "playoffs": {
             const playOffPairings: Pairing[] = createPlayoffPairings(
                 context.playoffTeams || teamNames,
             );
             return generateKnockoutFixtures(playOffPairings);
-        case "r16":
+        }
+        case "r16": {
             const r16Pairings: Pairing[] = createR16Pairings(
                 context.top8 || [],
                 context.playoffWinners || [],
             );
             return generateKnockoutFixtures(r16Pairings);
+        }
         case "quarterfinals":
-        case "semifinals":
+        case "semifinals": {
             const qualifiedPairings: Pairing[] = createPlayoffPairings(
                 context.qualifiedTeams || teamNames,
             );
             return generateKnockoutFixtures(qualifiedPairings);
-        case "final":
-            return generateFinalFixture(teamNames[0], teamNames[1]);
+        }
+        case "final": {
+            const finalists = context.finalists || teamNames.slice(0, 2);
+            return generateFinalFixture(finalists[0], finalists[1]);
+        }
         default:
             throw new Error(`Unknown UEFA phase: ${phase}`);
     }

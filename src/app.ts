@@ -39,7 +39,7 @@ function start(): void {
     // League-change subscription
     subscribeToLeagueChange(function (league) {
         selectedLeague = league as LeagueList | UEFACompetition;
-        storage.setSelectedLeague(league as LeagueList);
+        storage.setSelectedLeague(league as LeagueList | UEFACompetition);
 
         // Re-show standings section when switching leagues (might have been hidden)
         const standingsSection: HTMLElement | null =

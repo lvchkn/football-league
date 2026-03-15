@@ -25,18 +25,25 @@ export function renderTable(table: Table): void {
     sortedTableRows.forEach((row, i) => {
         const tr: HTMLTableRowElement = document.createElement("tr");
 
-        tr.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${row.team}</td>
-            <td>${row.played}</td>
-            <td>${row.wins}</td>
-            <td>${row.draws}</td>
-            <td>${row.losses}</td>
-            <td>${row.gf}</td>
-            <td>${row.ga}</td>
-            <td>${row.gf - row.ga}</td>
-            <td>${row.points}</td>
-        `;
+        const cells = [
+            i + 1,
+            row.team,
+            row.played,
+            row.wins,
+            row.draws,
+            row.losses,
+            row.gf,
+            row.ga,
+            row.gf - row.ga,
+            row.points,
+        ];
+
+        cells.forEach((value) => {
+            const td = document.createElement("td");
+            td.textContent = String(value);
+            tr.appendChild(td);
+        });
+
         tbody.appendChild(tr);
     });
 }
@@ -60,7 +67,9 @@ export function renderFixtures(
     fixtures.forEach((round: LeagueRound, i: number) => {
         const div: HTMLDivElement = document.createElement("div");
         div.className = "matchday";
-        div.innerHTML = `<h3>Matchday ${i + 1}</h3>`;
+        const h3: HTMLHeadingElement = document.createElement("h3");
+        h3.textContent = `Matchday ${i + 1}`;
+        div.appendChild(h3);
 
         round.matches.forEach((match: LeagueMatch, idx: number) => {
             const line: HTMLDivElement = document.createElement("div");
@@ -68,18 +77,43 @@ export function renderFixtures(
 
             const id = `r${i}_m${idx}`;
 
-            line.innerHTML = `
-                ${match.homeTeam} 
-                <input type="number" id="${id}_hg" min="0" style="width:40px" value="${
-                    match.homeGoals != null ? match.homeGoals : ""
-                }"> 
-                -
-                <input type="number" id="${id}_ag" min="0" style="width:40px" value="${
-                    match.awayGoals != null ? match.awayGoals : ""
-                }"> 
-                ${match.awayTeam}
-                <button id="${id}_btn">Apply result</button>
-            `;
+            const homeSpan = document.createElement("span");
+            homeSpan.textContent = match.homeTeam;
+
+            const homeInput = document.createElement("input");
+            homeInput.type = "number";
+            homeInput.id = `${id}_hg`;
+            homeInput.min = "0";
+            homeInput.style.width = "40px";
+            homeInput.value = match.homeGoals != null ? String(match.homeGoals) : "";
+
+            const dash = document.createTextNode(" - ");
+
+            const awayInput = document.createElement("input");
+            awayInput.type = "number";
+            awayInput.id = `${id}_ag`;
+            awayInput.min = "0";
+            awayInput.style.width = "40px";
+            awayInput.value = match.awayGoals != null ? String(match.awayGoals) : "";
+
+            const awaySpan = document.createElement("span");
+            awaySpan.textContent = match.awayTeam;
+
+            const applyBtn = document.createElement("button");
+            applyBtn.id = `${id}_btn`;
+            applyBtn.textContent = "Apply result";
+
+            line.append(
+                homeSpan,
+                " ",
+                homeInput,
+                dash,
+                awayInput,
+                " ",
+                awaySpan,
+                " ",
+                applyBtn
+            );
 
             const applyButton: HTMLButtonElement | null = line.querySelector(
                 `#${id}_btn`,

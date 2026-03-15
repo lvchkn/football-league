@@ -46,7 +46,7 @@ let currentUEFAPhase: Phase = "league";
 function recalcTable(): void {
     if (currentUEFAPhase === "league") {
         table = initUEFATable(teams);
-        (fixtures as LeaguePhase).map((round: Round) =>
+        (fixtures as LeaguePhase).forEach((round: Round) =>
             round.matches.forEach(function (match: Match) {
                 applyUEFAMatchResult(match, table);
             }),
