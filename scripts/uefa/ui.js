@@ -117,6 +117,15 @@ function renderUEFAFixtures(fixtures, onResultApplied, phase) {
 
     var isKnockout = phase !== "league";
 
+    // For knockout phases, wrap the callback so aggregate displays refresh
+    var wrappedOnResultApplied = onResultApplied;
+    if (isKnockout && phase !== "final") {
+        wrappedOnResultApplied = function () {
+            onResultApplied();
+            _refreshAllAggregates(container, fixtures);
+        };
+    }
+
     fixtures.forEach(function (round, i) {
         var div = document.createElement("div");
         div.className = "matchday";
@@ -131,9 +140,9 @@ function renderUEFAFixtures(fixtures, onResultApplied, phase) {
 
         // If knockout, group matches into ties for aggregate display
         if (isKnockout && phase !== "final") {
-            _renderKnockoutRound(div, round, i, onResultApplied);
+            _renderKnockoutRound(div, round, i, wrappedOnResultApplied);
         } else {
-            _renderLeagueRound(div, round, i, onResultApplied);
+            _renderLeagueRound(div, round, i, wrappedOnResultApplied);
         }
 
         // "Apply all results" button
@@ -152,7 +161,7 @@ function renderUEFAFixtures(fixtures, onResultApplied, phase) {
                 match.homeGoals = parsed.homeGoals;
                 match.awayGoals = parsed.awayGoals;
             });
-            onResultApplied();
+            wrappedOnResultApplied();
         });
         div.appendChild(applyAllBtn);
 
@@ -284,6 +293,25 @@ function _updateAggregate(el, leg1, leg2) {
         el.textContent += " → " + leg1.away + " advances";
     } else {
         el.textContent += " → " + leg1.home + " advances (higher seed)";
+    }
+}
+
+/**
+ * Refresh all aggregate displays in the fixtures container.
+ * Walks .aggregate-display elements in DOM order and pairs them
+ * with two-leg ties from the fixtures array (matches alternate leg1, leg2).
+ * @param {HTMLElement} container
+ * @param {Array<Array<Object>>} fixtures
+ */
+function _refreshAllAggregates(container, fixtures) {
+    var aggDivs = container.querySelectorAll(".aggregate-display");
+    var matches = fixtures.flat();
+    var tieIdx = 0;
+    for (var i = 0; i < matches.length; i += 2) {
+        if (aggDivs[tieIdx]) {
+            _updateAggregate(aggDivs[tieIdx], matches[i], matches[i + 1]);
+        }
+        tieIdx++;
     }
 }
 
