@@ -277,7 +277,9 @@ export function progressPhase(): void {
         }
 
         case "playoffs": {
-            const winners = getKnockoutWinners(fixtures as KnockoutRound);
+            const winners = getKnockoutWinners(
+                (fixtures as Round[])[0] as KnockoutRound,
+            );
             if (winners.length !== 8) {
                 alert(
                     "Could not determine all 8 playoff winners. Check results.",
@@ -304,7 +306,9 @@ export function progressPhase(): void {
         }
 
         case "r16": {
-            const winners = getKnockoutWinners(fixtures as KnockoutRound);
+            const winners = getKnockoutWinners(
+                (fixtures as Round[])[0] as KnockoutRound,
+            );
 
             if (winners.length !== 8) {
                 alert(
@@ -327,7 +331,9 @@ export function progressPhase(): void {
         }
 
         case "quarterfinals": {
-            const winners = getKnockoutWinners(fixtures as KnockoutRound);
+            const winners = getKnockoutWinners(
+                (fixtures as Round[])[0] as KnockoutRound,
+            );
 
             if (winners.length !== 4) {
                 alert(
@@ -350,7 +356,9 @@ export function progressPhase(): void {
         }
 
         case "semifinals": {
-            const winners = getKnockoutWinners(fixtures as KnockoutRound);
+            const winners = getKnockoutWinners(
+                (fixtures as Round[])[0] as KnockoutRound,
+            );
 
             if (winners.length !== 2) {
                 alert(
