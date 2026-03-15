@@ -43,3 +43,4 @@ A lightweight, browser-based multi-league football simulator. Choose from a vari
   - `table.js`: Standings calculation and sorting logic.
   - `ui.js`: DOM manipulation and UI event handling.
   - `storage.js`: localStorage-based persistence logic.
+  
