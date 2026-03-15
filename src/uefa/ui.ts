@@ -130,7 +130,7 @@ export function renderUEFAFixtures(
     // For knockout phases, wrap the callback so aggregate displays refresh
     let wrappedOnResultApplied = onResultApplied;
 
-    if (isKnockout && phase !== "final") {
+    if (isKnockout && phase !== "final" && phase !== "finished") {
         wrappedOnResultApplied = function () {
             onResultApplied();
             _refreshAllAggregates(container, fixtures);
@@ -153,7 +153,7 @@ export function renderUEFAFixtures(
         h3.textContent = roundLabel;
         div.appendChild(h3);
 
-        if (isKnockout && phase !== "final") {
+        if (isKnockout && phase !== "final" && phase !== "finished") {
             _renderKnockoutRound(
                 div,
                 round as KnockoutRound,
