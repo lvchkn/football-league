@@ -1,11 +1,15 @@
-window.FootballLeague = window.FootballLeague || {};
-window.FootballLeague.UEFA = window.FootballLeague.UEFA || {};
-
 /**
  * UEFA Competitions: Teams for Swiss Stage (36 teams each)
  */
 
-const uclTeams = [
+interface TeamsByCompetition {
+    [key: string]: string[];
+}
+
+export type UEFACompetition = "ucl" | "el" | "cl";
+export type Teams = string[];
+
+const uclTeams: Teams = [
     // Pot 1
     "Paris Saint-Germain",
     "Real Madrid",
@@ -51,7 +55,7 @@ const uclTeams = [
     "Kairat Almaty",
 ];
 
-const elTeams = [
+const elTeams: Teams = [
     // Pot 1
     "Roma",
     "Porto",
@@ -99,7 +103,7 @@ const elTeams = [
 
 const clTeams = Array.from({ length: 36 }, (_, i) => `CL Team ${i + 1}`);
 
-const uefaTeamsByCompetition = {
+const uefaTeamsByCompetition: TeamsByCompetition = {
     ucl: uclTeams,
     el: elTeams,
     cl: clTeams,
@@ -107,11 +111,9 @@ const uefaTeamsByCompetition = {
 
 /**
  * Get teams for a specific UEFA competition
- * @param {string} competition - "ucl", "el", or "cl"
- * @return {Array<string>} - array of team names
+ * @param {UEFACompetition} competition - "ucl", "el", or "cl"
+ * @return {Teams} - array of team names
  */
-function getUEFATeams(competition) {
+export function getUEFATeams(competition: UEFACompetition): Teams {
     return uefaTeamsByCompetition[competition] || [];
 }
-
-window.FootballLeague.UEFA.getTeams = getUEFATeams;
