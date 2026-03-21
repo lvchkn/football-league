@@ -1,5 +1,11 @@
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
     margin: 20px;
     padding: 0;
     color: #334155;
@@ -57,7 +63,9 @@ label[for="league-selector"] {
     min-width: 300px;
     background-color: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03);
     border: 1px solid #e2e8f0;
     padding: 15px;
 }
@@ -95,7 +103,7 @@ table {
 #standings th,
 #standings td {
     padding: 8px 6px;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     border: none;
     border-bottom: 1px solid #f1f5f9;
     text-align: center;
@@ -144,7 +152,9 @@ table:not(#standings) tbody tr:hover {
     padding: 20px;
     background-color: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03);
     border: 1px solid #e2e8f0;
 }
 
@@ -295,9 +305,12 @@ input[type="text"] {
     background-color: #ffffff;
     transition: all 0.2s ease;
     outline: none;
-    width: 44px;
     /* small inputs for goals */
     text-align: center;
+}
+
+input[type="number"] {
+    width: 44px;
 }
 
 input[type="number"]:focus,
@@ -330,7 +343,7 @@ button:focus-visible {
 
 #reset-btn {
     background-color: #ffffff;
-    color: #ef4444;
+    color: #b91c1c;
     border: 1px solid #ef4444;
 }
 
@@ -340,7 +353,7 @@ button:focus-visible {
 
 #regenerate-btn {
     background-color: #ffffff;
-    color: #f59e0b;
+    color: #92400e;
     border: 1px solid #f59e0b;
 }
 
