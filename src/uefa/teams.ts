@@ -99,120 +99,28 @@ const elTeams: Teams = [
     "Brann",
 ];
 
-// const clTeams = Array.from({ length: 36 }, (_, i) => `CL Team ${i + 1}`);
-
-// const clTeams: Teams = [
-//     // Pot 1
-
-//     "AEK Athens",
-
-//     "Fiorentina",
-
-//     "Mainz",
-
-//     "Raków Częstochowa",
-
-//     "Sparta Praha",
-
-//     "Strasbourg",
-
-//     // Pot 2
-
-//     "AZ Alkmaar",
-
-//     "Crystal Palace",
-
-//     "Dynamo Kyiv",
-
-//     "Rayo Vallecano",
-
-//     "Shakhtar Donetsk",
-
-//     "Slovan Bratislava",
-
-//     // Pot 3
-
-//     "AEK Larnaca",
-
-//     "Celje",
-
-//     "Jagiellonia Białystok",
-
-//     "Lech Poznań",
-
-//     "Legia Warszawa",
-
-//     "Rijeka",
-
-//     // Pot 4
-
-//     "Drita",
-
-//     "KuPS Kuopio",
-
-//     "Lausanne-Sport",
-
-//     "Noah",
-
-//     "Omonoia",
-
-//     "Shkëndija",
-
-//     // Pot 5
-
-//     "Aberdeen",
-
-//     "Breiðablik",
-
-//     "Häcken",
-
-//     "Hamrun Spartans",
-
-//     "Samsunspor",
-
-//     "Sigma Olomouc",
-
-//     // Pot 6
-
-//     "Lincoln Red Imps",
-
-//     "Shamrock Rovers",
-
-//     "Shelbourne",
-
-//     "SK Rapid",
-
-//     "Universitatea Craiova",
-
-//     "Zrinjski",
-// ];
-
 const clTeams: Teams = [
-    // Historic giants currently slumming it
     "Fiorentina",
     "Roma",
     "Aston Villa",
     "West Ham United",
     "RSC Anderlecht",
-    "Olympiacos", // actual UECL winners 2024
+    "Olympiacos",
 
-    // Eastern European flavor (cult level, not superclubs)
     "Legia Warszawa",
     "Jagiellonia Białystok",
     "Lech Poznań",
     "Ferencváros",
-    "Čukarički", // Serbian underdog regulars
-    "Zrinjski Mostar", // first Bosnian club ever in group stage
+    "Čukarički",
+    "Zrinjski Mostar",
 
-    // Scandinavian representatives
     "Malmö FF",
     "Brøndby IF",
     "Rosenborg",
     "Häcken",
     "Bodø/Glimt",
-    "KÍ Klaksvík", // first ever Faroese club in group stage, part-timers with day jobs
+    "KÍ Klaksvík",
 
-    // Portuguese & Spanish flavor
     "Vitória SC",
     "Rayo Vallecano",
     "Celta Vigo",
@@ -220,21 +128,19 @@ const clTeams: Teams = [
     "PAOK",
     "Omonoia",
 
-    // Dutch & Belgian charm
     "AZ Alkmaar",
     "Go Ahead Eagles",
     "Utrecht",
     "Gent",
     "Genk",
-    "Beerschot", // Antwerp derby chaos club, yo-yo between divisions
+    "Beerschot",
 
-    // Wildcard underdogs & cult clubs
     "Shamrock Rovers",
     "Aberdeen",
-    "Larne", // first Northern Irish club to host a home group stage match
-    "Breiðablik", // first Icelandic club ever in group stage
-    "Hamrun Spartans", // first Maltese club ever in league phase
-    "Lincoln Red Imps", // Gibraltar minnows, perennial qualifiers
+    "Larne",
+    "Breiðablik",
+    "Hamrun Spartans",
+    "Lincoln Red Imps",
 ];
 
 const uefaTeamsByCompetition: TeamsByCompetition = {
