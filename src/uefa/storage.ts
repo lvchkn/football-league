@@ -4,15 +4,14 @@
  * and phase-transition context (top-8, playoff teams, etc.).
  */
 
+import type { Match, LeagueMatch, KnockoutMatch } from "../interfaces/match.js";
+import type { Round } from "../interfaces/round.js";
 import type {
-    KnockoutMatch,
-    LeagueMatch,
-    Match,
     Phase,
-    Round,
+    Teams,
+    UEFACompetition,
     UEFAContext,
-} from "./fixtures.js";
-import type { Teams, UEFACompetition } from "./teams.js";
+} from "../interfaces/tournament.js";
 
 const FIXTURES_KEY_PREFIX = "football-league:uefa:fixtures:";
 const STRUCTURE_KEY_PREFIX = "football-league:uefa:fixtures-structure:";
@@ -21,7 +20,16 @@ const PHASE_CONTEXT_KEY_PREFIX = "football-league:uefa:phase-context:";
 const QUALIFIED_KEY_PREFIX = "football-league:uefa:qualified-teams:";
 const DEBOUNCE_MS = 300;
 
-let pending: ReturnType<typeof setTimeout> | null = null;
+const pendingSaves = new Map<string, ReturnType<typeof setTimeout>>();
+
+export function cancelPendingSave(competition: UEFACompetition): void {
+    const key = competition || "ucl";
+    const existing = pendingSaves.get(key);
+    if (existing) {
+        clearTimeout(existing);
+        pendingSaves.delete(key);
+    }
+}
 
 function _fixturesKey(competition: UEFACompetition): string {
     return FIXTURES_KEY_PREFIX + (competition || "ucl");
@@ -75,21 +83,28 @@ export function setFixturesDebounced(
     fixtures: Round[],
     competition: UEFACompetition,
 ) {
-    if (pending) clearTimeout(pending);
+    const key = competition || "ucl";
+    const existing = pendingSaves.get(key);
+    if (existing) clearTimeout(existing);
+
     const minimal = _extractMinimal(fixtures);
-    pending = setTimeout(function () {
+    const timeout = setTimeout(function () {
         _setFixtures(minimal, competition);
-        pending = null;
+        pendingSaves.delete(key);
     }, DEBOUNCE_MS);
+
+    pendingSaves.set(key, timeout);
 }
 
 export function setFixturesImmediate(
     fixtures: Round[],
     competition: UEFACompetition,
 ) {
-    if (pending) {
-        clearTimeout(pending);
-        pending = null;
+    const key = competition || "ucl";
+    const existing = pendingSaves.get(key);
+    if (existing) {
+        clearTimeout(existing);
+        pendingSaves.delete(key);
     }
     return _setFixtures(_extractMinimal(fixtures), competition);
 }
@@ -211,9 +226,11 @@ export function setQualifiedTeams(
 }
 
 export function clearAll(competition: UEFACompetition): void {
-    if (pending) {
-        clearTimeout(pending);
-        pending = null;
+    const key = competition || "ucl";
+    const existing = pendingSaves.get(key);
+    if (existing) {
+        clearTimeout(existing);
+        pendingSaves.delete(key);
     }
     try {
         localStorage.removeItem(_fixturesKey(competition));

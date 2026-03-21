@@ -1,23 +1,4 @@
-import type { Teams } from "./uefa/teams.js";
-
-export type LeagueList =
-    | "english"
-    | "french"
-    | "german"
-    | "italian"
-    | "spanish"
-    | "russian"
-    | "dutch"
-    | "belgian"
-    | "serbian"
-    | "greek"
-    | "turkish";
-
-export interface League {
-    key: LeagueList;
-    name: string;
-    teams: Teams;
-}
+import type { League, LeagueList, Teams } from "../interfaces/tournament.js";
 
 const englishLeague: League = {
     key: "english",
@@ -296,8 +277,6 @@ const turkishLeague: League = {
 
 /**
  * Get teams by league name.
- * @param {string} league - The name of the league.
- * @returns {Teams} An array of team names in the specified league.
  */
 export function getTeamsByLeague(league: LeagueList): Teams {
     switch (league) {

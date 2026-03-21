@@ -1,7 +1,9 @@
 body {
-    font-family: sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 20px;
     padding: 0;
+    color: #334155;
+    background-color: #f8fafc;
 }
 
 label[for="league-selector"] {
@@ -53,6 +55,11 @@ label[for="league-selector"] {
     max-height: calc(100vh - 50px);
     overflow-y: auto;
     min-width: 300px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e2e8f0;
+    padding: 15px;
 }
 
 .fixtures-section {
@@ -80,15 +87,17 @@ table {
 #standings thead th {
     position: sticky;
     top: 0;
-    background: #eee;
+    background: #f1f5f9;
     z-index: 2;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 #standings th,
 #standings td {
-    padding: 4px 6px;
+    padding: 8px 6px;
     word-break: break-word;
-    border: 1px solid #ccc;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
     text-align: center;
     font-size: 13px;
 }
@@ -111,22 +120,32 @@ table {
 /* Scope general table cell styles to tables other than #standings */
 table:not(#standings) th,
 table:not(#standings) td {
-    border: 1px solid #ccc;
-    padding: 4px 6px;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 8px 6px;
     text-align: center;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 th {
-    background: #eee;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+}
+
+#standings tbody tr:hover,
+table:not(#standings) tbody tr:hover {
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
 }
 
 .matchday {
     margin-top: 30px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #f9f9f9;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e2e8f0;
 }
 
 .matchday h3 {
@@ -251,12 +270,90 @@ th {
     }
 }
 
+/* Global Button Styles */
+button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Global Input Styles */
+input[type="number"],
+input[type="text"] {
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 6px;
+    font-size: 14px;
+    color: #334155;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    outline: none;
+    width: 44px;
+    /* small inputs for goals */
+    text-align: center;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Remove up/down arrows from number inputs for a cleaner look */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    appearance: textfield;
+}
+
+button:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+}
+
+button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+#reset-btn {
+    background-color: #ffffff;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+#reset-btn:hover {
+    background-color: #fef2f2;
+}
+
+#regenerate-btn {
+    background-color: #ffffff;
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+}
+
+#regenerate-btn:hover {
+    background-color: #fffbeb;
+}
+
 /* UEFA Competition Styles */
 .phase-indicator {
     padding: 12px 16px;
-    /* background: linear-gradient(135deg, #d9dae2 0%, #c5aadf 100%); */
-    /* color: white; */
-    border-radius: 6px;
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    color: white;
+    border-radius: 8px;
     margin-bottom: 20px;
     text-align: center;
     font-weight: 600;
@@ -272,23 +369,16 @@ th {
 
 .phase-buttons button {
     padding: 10px 20px;
-    /* background: linear-gradient(135deg, #d9dae2 0%, #c5aadf 100%); */
-    /* color: white; */
-    border: none;
-    border-radius: 6px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
     font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .phase-buttons button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .phase-buttons button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }

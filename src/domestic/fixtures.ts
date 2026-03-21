@@ -1,26 +1,10 @@
-import type { LeagueMatch, LeaguePhase, LeagueRound } from "./uefa/fixtures.js";
-import type { Teams } from "./uefa/teams.js";
-
-/**
- * Fisher-Yates shuffle algorithm
- * @param {Array} array - array to shuffle
- * @returns {Array} - shuffled array
- */
-export function _shuffleArray<T>(array: T[]): T[] {
-    const shuffled = array.slice();
-
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    return shuffled;
-}
+import type { LeagueMatch } from "../interfaces/match.js";
+import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
+import type { Teams } from "../interfaces/tournament.js";
+import { _shuffleArray } from "../utils/shuffle.js";
 
 /**
  * Round-robin fixture generation (circle method)
- * @param {Teams} teamNames - array of team names
- * @returns {LeaguePhase} - array of rounds, each round is array of matches
  */
 export function generateFixtures(teamNames: Teams): LeaguePhase {
     const shuffledTeams: Teams = _shuffleArray(teamNames);

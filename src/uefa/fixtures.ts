@@ -1,47 +1,20 @@
-export interface Pairing {
-    homeTeam: string;
-    awayTeam: string;
-}
-
-export interface MatchResult {
-    homeGoals: number | null;
-    awayGoals: number | null;
-}
-
-export interface Match extends Pairing {
-    homeGoals: number | null;
-    awayGoals: number | null;
-}
-
-export interface LeagueMatch extends Match {
-    // no additional fields needed for league matches
-}
-
-export interface Round {
-    matches: Match[];
-}
-
-export interface LeagueRound extends Round {
-    matches: LeagueMatch[];
-}
-
-export interface KnockoutMatch extends Match {
-    leg: number;
-    tieIndex: number; // to link leg 1 and leg 2 of the same tie
-}
-
-export interface KnockoutRound extends Round {
-    matches: KnockoutMatch[];
-}
-
-export type LeaguePhase = LeagueRound[];
+import type { Phase, UEFAContext } from "../interfaces/tournament.js";
+import type {
+    KnockoutMatch,
+    LeagueMatch,
+    Match,
+    Pairing,
+} from "../interfaces/match.js";
+import type {
+    KnockoutRound,
+    LeaguePhase,
+    LeagueRound,
+} from "../interfaces/round.js";
 
 /**
  * Generate league phase fixtures (8 rounds, 36 teams, each team plays exactly 8 matches).
  * Uses the circle method from round-robin scheduling, taking the first 8 of 35 possible rounds.
  * Each round has 18 matches (all 36 teams play once per round).
- * @param {string[]} teamNames - array of 36 team names
- * @returns {LeaguePhase} - 8 rounds, each with 18 matches
  */
 export function generateLeagueFixtures(teamNames: string[]): LeaguePhase {
     if (teamNames.length !== 36) {
@@ -117,8 +90,6 @@ export function generateLeagueFixtures(teamNames: string[]): LeaguePhase {
 /**
  * Generate two-leg knockout fixtures from an array of seed pairings.
  * In each pairing the first team is home in Leg 1, second team is home in Leg 2.
- * @param {Pairing[]} pairings - array of team pairings for the knockout round
- * @returns {KnockoutRound} - single round containing all leg matches (paired consecutively)
  */
 export function generateKnockoutFixtures(pairings: Pairing[]): KnockoutRound {
     const matches: KnockoutMatch[] = [];
@@ -151,9 +122,6 @@ export function generateKnockoutFixtures(pairings: Pairing[]): KnockoutRound {
 
 /**
  * Generate a single-match final fixture.
- * @param {string} teamA
- * @param {string} teamB
- * @returns {Match}
  */
 export function generateFinalFixture(teamA: string, teamB: string): Match {
     return {
@@ -168,9 +136,6 @@ export function generateFinalFixture(teamA: string, teamB: string): Match {
  * Determine the winner of a completed two-leg tie.
  * If the aggregate is level, the higher-seeded team (Leg 1 home) advances
  * (in real life this would go to extra time and penalties in Leg 2).
- * @param {Match} leg1 - leg 1 match object
- * @param {Match} leg2 - leg 2 match object
- * @returns {string} - winning team name
  */
 export function getTieWinner(leg1: Match, leg2: Match): string | null {
     if (
@@ -198,8 +163,6 @@ export function getTieWinner(leg1: Match, leg2: Match): string | null {
 /**
  * Extract every tie winner from a set of two-leg knockout fixtures.
  * Matches in the flat list are expected to alternate: leg1, leg2, leg1, leg2, ...
- * @param {KnockoutRound} fixtures
- * @returns {string[]} - array of winning team names (empty entries if ties are incomplete)
  */
 export function getKnockoutWinners(fixtures: KnockoutRound): string[] {
     const matches: KnockoutMatch[] = fixtures.matches;
@@ -220,8 +183,6 @@ export function getKnockoutWinners(fixtures: KnockoutRound): string[] {
  * Create playoff pairings from teams ranked 9-24 in the league phase.
  * Seeding: 9 vs 24, 10 vs 23, 11 vs 22, ... , 16 vs 17.
  * Lower-seeded team is home in Leg 1; higher seed gets home advantage in Leg 2.
- * @param {string[]} playoffTeams - 16 team names ordered by league rank (index 0 = rank 9)
- * @returns {Pairing[]} - array of 8 pairings for the playoff round
  */
 export function createPlayoffPairings(playoffTeams: string[]): Pairing[] {
     const pairings: Pairing[] = [];
@@ -243,9 +204,6 @@ export function createPlayoffPairings(playoffTeams: string[]): Pairing[] {
  * Top 8 (direct qualifiers) vs 8 playoff winners.
  * 1st vs playoff-winner-8, 2nd vs playoff-winner-7, ...
  * Playoff winners are home Leg 1; top-8 teams home Leg 2.
- * @param {string[]} top8 - teams ranked 1-8 from the league phase
- * @param {string[]} playoffWinners - 8 winners from the playoff round
- * @returns {Pairing[]} - array of 8 pairings for the Round of 16
  */
 export function createR16Pairings(
     top8: string[],
@@ -263,29 +221,8 @@ export function createR16Pairings(
     return pairings;
 }
 
-export type Phase =
-    | "league"
-    | "playoffs"
-    | "r16"
-    | "quarterfinals"
-    | "semifinals"
-    | "final"
-    | "finished";
-
-export interface UEFAContext {
-    playoffTeams?: string[];
-    top8?: string[];
-    playoffWinners?: string[];
-    qualifiedTeams?: string[];
-    finalists?: string[];
-}
-
 /**
  * Top-level fixture generator for any UEFA phase.
- * @param {string[]} teamNames - team names (used for league phase & final)
- * @param {Phase} phase - current phase of the competition
- * @param {UEFAContext} [context] - additional data needed for knockout phases
- * @returns {LeaguePhase | KnockoutRound | Match}
  */
 export function generateUEFAFixtures(
     teamNames: string[],
