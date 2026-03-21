@@ -1,7 +1,7 @@
 /**
  * Fisher-Yates shuffle algorithm
  */
-export function _shuffleArray<T>(array: T[]): T[] {
+export function shuffleArray<T>(array: T[]): T[] {
     const shuffled = array.slice();
 
     for (let i = shuffled.length - 1; i > 0; i--) {

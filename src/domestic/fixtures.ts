@@ -1,13 +1,13 @@
 import type { LeagueMatch } from "../interfaces/match.js";
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
 import type { Teams } from "../interfaces/tournament.js";
-import { _shuffleArray } from "../utils/shuffle.js";
+import { shuffleArray } from "../utils/shuffle.js";
 
 /**
  * Round-robin fixture generation (circle method)
  */
 export function generateFixtures(teamNames: Teams): LeaguePhase {
-    const shuffledTeams: Teams = _shuffleArray(teamNames);
+    const shuffledTeams: Teams = shuffleArray(teamNames);
     const numberOfTeams: number = shuffledTeams.length;
     let teams: Teams = shuffledTeams.slice();
 
@@ -47,7 +47,7 @@ export function generateFixtures(teamNames: Teams): LeaguePhase {
             }
         }
 
-        const shuffledMatches: LeagueMatch[] = _shuffleArray(matches);
+        const shuffledMatches: LeagueMatch[] = shuffleArray(matches);
         firstHalf.push({ matches: shuffledMatches });
 
         const [fixed, ...rest] = teams;

@@ -12,7 +12,7 @@ import { applyMatchResult, initTable, removeMatchResult } from "./table.js";
 import { getTeamsByLeague } from "./teams.js";
 import { renderFixtures, renderTable } from "./ui.js";
 import { generateFixtures } from "./fixtures.js";
-import { _shuffleArray } from "../utils/shuffle.js";
+import { shuffleArray } from "../utils/shuffle.js";
 
 /**
  * Create a domestic league app for the given league.
@@ -129,7 +129,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
 
     function regenerate(): void {
         storage.clearAll(league);
-        fixtures = generateFixtures(_shuffleArray(teams));
+        fixtures = generateFixtures(shuffleArray(teams));
         storage.setFixturesStructure(fixtures, league);
         recalcTable();
         renderAllFixtures();
@@ -164,8 +164,6 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         fixtures = [];
         teams = [];
     }
-
-    init();
 
     return { init, save, reset, regenerate, destroy };
 }

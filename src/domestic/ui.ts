@@ -137,11 +137,7 @@ export function renderFixtures(
 
                 if (!parsedInput) return;
 
-                const oldMatch: LeagueMatch = {
-                    ...match,
-                    homeGoals: match.homeGoals,
-                    awayGoals: match.awayGoals,
-                };
+                const oldMatch: LeagueMatch = { ...match };
 
                 const { homeGoals, awayGoals } = parsedInput;
                 match.homeGoals = homeGoals;
@@ -183,11 +179,7 @@ export function renderFixtures(
 
                 if (!parsedInput) return;
 
-                const oldMatch: LeagueMatch = {
-                    ...match,
-                    homeGoals: match.homeGoals,
-                    awayGoals: match.awayGoals,
-                };
+                const oldMatch: LeagueMatch = { ...match };
 
                 const { homeGoals, awayGoals } = parsedInput;
                 match.homeGoals = homeGoals;
@@ -195,6 +187,8 @@ export function renderFixtures(
 
                 updates.push({ match, oldMatch });
             });
+
+            if (updates.length === 0) return;
 
             onResultsApplied(updates);
         });

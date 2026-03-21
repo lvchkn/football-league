@@ -27,11 +27,17 @@ function isUEFACompetition(league: string): boolean {
  * Create the appropriate competition app for the given league.
  */
 function createApp(league: LeagueList | UEFACompetition): CompetitionApp {
+    let app: CompetitionApp;
+
     if (isUEFACompetition(league)) {
-        return createUEFAApp(league as UEFACompetition);
+        app = createUEFAApp(league as UEFACompetition);
+        app.init();
+        return app;
     }
 
-    return createDomesticApp(league as LeagueList);
+    app = createDomesticApp(league as LeagueList);
+    app.init();
+    return app;
 }
 
 /**
@@ -53,7 +59,7 @@ function start(): void {
         if (activeApp) {
             activeApp.destroy();
         }
-        
+
         selectedLeague = league as LeagueList | UEFACompetition;
         storage.setSelectedLeague(league as LeagueList | UEFACompetition);
 

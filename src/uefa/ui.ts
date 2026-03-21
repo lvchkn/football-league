@@ -186,17 +186,15 @@ export function renderUEFAFixtures(
 
                 if (!parsedInput) return;
 
-                const oldMatch: Match = {
-                    ...match,
-                    homeGoals: match.homeGoals,
-                    awayGoals: match.awayGoals,
-                };
+                const oldMatch: Match = { ...match };
 
                 match.homeGoals = parsedInput.homeGoals;
                 match.awayGoals = parsedInput.awayGoals;
 
                 updates.push({ match, oldMatch });
             });
+
+            if (updates.length === 0) return;
 
             wrappedOnResultsApplied(updates);
         });
@@ -355,11 +353,7 @@ function _createMatchRow(
 
         if (!parsedInputs) return;
 
-        const oldMatch: Match = {
-            ...match,
-            homeGoals: match.homeGoals,
-            awayGoals: match.awayGoals,
-        };
+        const oldMatch: Match = { ...match };
 
         match.homeGoals = parsedInputs.homeGoals;
         match.awayGoals = parsedInputs.awayGoals;

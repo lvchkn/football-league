@@ -23,7 +23,7 @@ import {
     removeUEFAMatchResult,
     sortUEFATable,
 } from "./table.js";
-import { _shuffleArray } from "../utils/shuffle.js";
+import { shuffleArray } from "../utils/shuffle.js";
 
 /**
  * Create a UEFA competition app for the given competition.
@@ -396,7 +396,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
 
         currentUEFAPhase = "league";
         fixtures = generateUEFAFixtures(
-            _shuffleArray(teams),
+            shuffleArray(teams),
             currentUEFAPhase,
             {},
         ) as LeaguePhase;
@@ -444,8 +444,6 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         fixtures = [];
         teams = [];
     }
-
-    init();
 
     return { init, save, reset, regenerate, destroy };
 }
