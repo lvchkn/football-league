@@ -1,81 +1,84 @@
 <!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Fantasy Premier League Simulator</title>
+        <link rel="stylesheet" href="styles.css" />
+        <link rel="icon" href="public/favicon-96x96.png" />
+    </head>
 
-<head>
-    <meta charset="UTF-8" />
-    <title>Fantasy Premier League Simulator</title>
-    <link rel="stylesheet" href="styles.css" />
-</head>
+    <body>
+        <h1>Fantasy League Simulator</h1>
 
-<body>
-    <h1>Fantasy League Simulator</h1>
+        <label for="league-selector">Choose a league:</label>
+        <select id="league-selector" aria-label="Select league">
+            <optgroup label="Domestic Leagues">
+                <option value="english" selected>English Premier League</option>
+                <option value="spanish">Spanish La Liga</option>
+                <option value="italian">Italian Serie A</option>
+                <option value="german">German Bundesliga</option>
+                <option value="french">French Ligue 1</option>
+                <option value="dutch">Dutch Eredivisie</option>
+                <option value="belgian">Belgian Pro League</option>
+                <option value="russian">Russian Premier League</option>
+                <option value="serbian">Serbian SuperLiga</option>
+                <option value="greek">Greek Super League</option>
+                <option value="turkish">Turkish Süper Lig</option>
+            </optgroup>
+            <optgroup label="UEFA Competitions">
+                <option value="ucl">UEFA Champions League</option>
+                <option value="el">UEFA Europa League</option>
+                <option value="cl">UEFA Conference League</option>
+            </optgroup>
+        </select>
 
-    <label for="league-selector">Choose a league:</label>
-    <select id="league-selector" aria-label="Select league">
-        <optgroup label="Domestic Leagues">
-            <option value="english" selected>English Premier League</option>
-            <option value="spanish">Spanish La Liga</option>
-            <option value="italian">Italian Serie A</option>
-            <option value="german">German Bundesliga</option>
-            <option value="french">French Ligue 1</option>
-            <option value="dutch">Dutch Eredivisie</option>
-            <option value="belgian">Belgian Pro League</option>
-            <option value="russian">Russian Premier League</option>
-            <option value="serbian">Serbian SuperLiga</option>
-            <option value="greek">Greek Super League</option>
-            <option value="turkish">Turkish Süper Lig</option>
-        </optgroup>
-        <optgroup label="UEFA Competitions">
-            <option value="ucl">UEFA Champions League</option>
-            <option value="el">UEFA Europa League</option>
-            <option value="cl">UEFA Conference League</option>
-        </optgroup>
-    </select>
+        <div class="container">
+            <div class="standings-section">
+                <h2>Standings</h2>
+                <table id="standings">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Team</th>
+                            <th>Played</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th>GF</th>
+                            <th>GA</th>
+                            <th>GD</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
 
-    <div class="container">
-        <div class="standings-section">
-            <h2>Standings</h2>
-            <table id="standings">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Team</th>
-                        <th>Played</th>
-                        <th>W</th>
-                        <th>D</th>
-                        <th>L</th>
-                        <th>GF</th>
-                        <th>GA</th>
-                        <th>GD</th>
-                        <th>Pts</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="fixtures-section">
+                <h2>
+                    Fixtures
+                    <button id="save-btn" style="margin-left: 12px">
+                        Save
+                    </button>
+                    <button id="reset-btn" style="margin-left: 6px">
+                        Reset scores
+                    </button>
+                    <button id="regenerate-btn" style="margin-left: 6px">
+                        Regenerate fixtures
+                    </button>
+                </h2>
+                <div id="fixtures"></div>
+            </div>
         </div>
 
-        <div class="fixtures-section">
-            <h2>
-                Fixtures
-                <button id="save-btn" style="margin-left: 12px">
-                    Save
-                </button>
-                <button id="reset-btn" style="margin-left: 6px">
-                    Reset scores
-                </button>
-                <button id="regenerate-btn" style="margin-left: 6px">
-                    Regenerate fixtures
-                </button>
-            </h2>
-            <div id="fixtures"></div>
-        </div>
-    </div>
+        <button
+            id="scroll-to-top"
+            class="scroll-to-top"
+            aria-label="Scroll to top"
+        >
+            ↑
+        </button>
 
-    <button id="scroll-to-top" class="scroll-to-top" aria-label="Scroll to top">
-        ↑
-    </button>
-
-    <script type="module" src="src/app.ts"></script>
-</body>
-
+        <script type="module" src="src/app.ts"></script>
+    </body>
 </html>
