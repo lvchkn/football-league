@@ -28,7 +28,6 @@ describe("Shuffle Utility", () => {
     it("should handle an empty array", () => {
         const result = shuffleArray([]);
         expect(result).toEqual([]);
-        expect(result).not.toBe([]);
     });
 
     it("should handle a single-element array", () => {
