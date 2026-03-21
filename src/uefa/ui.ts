@@ -1,11 +1,8 @@
-import type {
-    KnockoutRound,
-    LeagueRound,
-    Match,
-    Phase,
-    Round,
-} from "./fixtures.js";
-import { sortUEFATable, type Table, type TableRow } from "./table.js";
+import type { Match, MatchUpdate } from "../interfaces/match.js";
+import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
+import type { Table, TableRow } from "../interfaces/table.js";
+import type { Phase } from "../interfaces/tournament.js";
+import { sortUEFATable } from "./table.js";
 
 /**
  * Human-readable label for each UEFA phase.
@@ -23,8 +20,6 @@ const PHASE_LABELS: Record<Phase, string> = {
 /**
  * Render the UEFA league table in the #standings element.
  * Only meaningful during the league phase.
- * @param {Table} table
- * @param {Phase} phase
  */
 export function renderUEFATable(table: Table, phase: Phase) {
     const standingsSection: HTMLElement | null =
@@ -84,7 +79,6 @@ export function renderUEFATable(table: Table, phase: Phase) {
 
 /**
  * Parse a pair of goal-input strings and return validated integers.
- * @return {{ homeGoals: number, awayGoals: number } | null}
  */
 function _parseGoals(
     homeGoals: string,
@@ -103,13 +97,10 @@ function _parseGoals(
 /**
  * Render UEFA fixtures for the current phase.
  * During knockout phases it also shows aggregate scores per tie.
- * @param {Round[]} fixtures
- * @param {Function} onResultApplied
- * @param {Phase} phase
  */
 export function renderUEFAFixtures(
     fixtures: Round[],
-    onResultApplied: () => void,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
     phase: Phase,
 ) {
     phase = phase || "league";
@@ -128,11 +119,11 @@ export function renderUEFAFixtures(
     const isKnockout: boolean = phase !== "league";
 
     // For knockout phases, wrap the callback so aggregate displays refresh
-    let wrappedOnResultApplied = onResultApplied;
+    let wrappedOnResultsApplied = onResultsApplied;
 
     if (isKnockout && phase !== "final" && phase !== "finished") {
-        wrappedOnResultApplied = function () {
-            onResultApplied();
+        wrappedOnResultsApplied = function (updates: MatchUpdate[]) {
+            onResultsApplied(updates);
             _refreshAllAggregates(container, fixtures);
         };
     }
@@ -158,14 +149,14 @@ export function renderUEFAFixtures(
                 div,
                 round as KnockoutRound,
                 i,
-                wrappedOnResultApplied,
+                wrappedOnResultsApplied,
             );
         } else {
             _renderLeagueRound(
                 div,
                 round as LeagueRound,
                 i,
-                wrappedOnResultApplied,
+                wrappedOnResultsApplied,
             );
         }
 
@@ -176,6 +167,7 @@ export function renderUEFAFixtures(
         applyAllResultsButton.textContent = "Apply all results";
 
         applyAllResultsButton.addEventListener("click", function () {
+            const updates: MatchUpdate[] = [];
             round.matches.forEach(function (match: Match, idx: number) {
                 const id: string = "r" + i + "_m" + idx;
 
@@ -194,11 +186,17 @@ export function renderUEFAFixtures(
 
                 if (!parsedInput) return;
 
+                const oldMatch: Match = { ...match };
+
                 match.homeGoals = parsedInput.homeGoals;
                 match.awayGoals = parsedInput.awayGoals;
+
+                updates.push({ match, oldMatch });
             });
 
-            wrappedOnResultApplied();
+            if (updates.length === 0) return;
+
+            wrappedOnResultsApplied(updates);
         });
 
         div.appendChild(applyAllResultsButton);
@@ -214,14 +212,14 @@ function _renderLeagueRound(
     container: HTMLDivElement,
     round: LeagueRound,
     roundIdx: number,
-    onResultApplied: () => void,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
 ): void {
     round.matches.forEach(function (match: Match, idx: number) {
         const matchRow: HTMLDivElement = _createMatchRow(
             match,
             roundIdx,
             idx,
-            onResultApplied,
+            onResultsApplied,
             null,
         );
 
@@ -236,7 +234,7 @@ function _renderKnockoutRound(
     container: HTMLDivElement,
     round: KnockoutRound,
     roundIdx: number,
-    onResultApplied: () => void,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
 ): void {
     for (let i = 0; i < round.matches.length; i += 2) {
         const leg1: Match = round.matches[i];
@@ -256,11 +254,11 @@ function _renderKnockoutRound(
         tieDiv.appendChild(header);
 
         tieDiv.appendChild(
-            _createMatchRow(leg1, roundIdx, i, onResultApplied, "Leg 1"),
+            _createMatchRow(leg1, roundIdx, i, onResultsApplied, "Leg 1"),
         );
 
         tieDiv.appendChild(
-            _createMatchRow(leg2, roundIdx, i + 1, onResultApplied, "Leg 2"),
+            _createMatchRow(leg2, roundIdx, i + 1, onResultsApplied, "Leg 2"),
         );
 
         const aggregateDiv: HTMLDivElement = document.createElement("div");
@@ -281,7 +279,7 @@ function _createMatchRow(
     match: Match,
     roundIdx: number,
     matchIdx: number,
-    onResultApplied: () => void,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
     label: string | null,
 ): HTMLDivElement {
     const line: HTMLDivElement = document.createElement("div");
@@ -355,9 +353,11 @@ function _createMatchRow(
 
         if (!parsedInputs) return;
 
+        const oldMatch: Match = { ...match };
+
         match.homeGoals = parsedInputs.homeGoals;
         match.awayGoals = parsedInputs.awayGoals;
-        onResultApplied();
+        onResultsApplied([{ match, oldMatch }]);
     });
 
     return line;
@@ -371,18 +371,21 @@ function _updateAggregate(
     leg1: Match,
     leg2: Match,
 ): void {
-    if (
-        leg1.homeGoals === null ||
-        leg1.awayGoals === null ||
-        leg2.homeGoals === null ||
-        leg2.awayGoals === null
-    ) {
+    const l1Complete = leg1.homeGoals !== null && leg1.awayGoals !== null;
+    const l2Complete = leg2.homeGoals !== null && leg2.awayGoals !== null;
+
+    if (!l1Complete && !l2Complete) {
         element.textContent = "Aggregate: TBD";
         return;
     }
 
-    const aggregate1: number = leg1.homeGoals + leg2.awayGoals;
-    const aggregate2: number = leg1.awayGoals + leg2.homeGoals;
+    const l1h = leg1.homeGoals || 0;
+    const l1a = leg1.awayGoals || 0;
+    const l2h = leg2.homeGoals || 0;
+    const l2a = leg2.awayGoals || 0;
+
+    const aggregate1: number = l1h + l2a;
+    const aggregate2: number = l1a + l2h;
 
     element.textContent =
         "Aggregate: " +
@@ -394,13 +397,15 @@ function _updateAggregate(
         " " +
         leg1.awayTeam;
 
-    if (aggregate1 > aggregate2) {
-        element.textContent += " -> " + leg1.homeTeam + " advances";
-    } else if (aggregate2 > aggregate1) {
-        element.textContent += " -> " + leg1.awayTeam + " advances";
-    } else {
-        element.textContent +=
-            " -> " + leg1.homeTeam + " advances (higher seed)";
+    if (l1Complete && l2Complete) {
+        if (aggregate1 > aggregate2) {
+            element.textContent += " -> " + leg1.homeTeam + " advances";
+        } else if (aggregate2 > aggregate1) {
+            element.textContent += " -> " + leg1.awayTeam + " advances";
+        } else {
+            element.textContent +=
+                " -> " + leg1.homeTeam + " advances (higher seed)";
+        }
     }
 }
 
@@ -408,8 +413,6 @@ function _updateAggregate(
  * Refresh all aggregate displays in the fixtures container.
  * Walks .aggregate-display elements in DOM order and pairs them
  * with two-leg ties from the fixtures array (matches alternate leg1, leg2).
- * @param {HTMLElement} container
- * @param {Array<Array<Object>>} fixtures
  */
 function _refreshAllAggregates(
     container: HTMLElement,
@@ -436,7 +439,6 @@ function _refreshAllAggregates(
 
 /**
  * Render the "Progress to Next Phase" button.
- * @param {Function} onProgressClick
  */
 export function renderPhaseProgressionButtons(
     onProgressClick: () => void,

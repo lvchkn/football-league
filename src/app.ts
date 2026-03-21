@@ -1,20 +1,43 @@
-import { subscribeToLeagueChange, updateLeagueSelector } from "./ui.js";
+import type {
+    LeagueList,
+    UEFACompetition,
+    CompetitionApp,
+} from "./interfaces/tournament.js";
 import * as storage from "./storage.js";
-import type { LeagueList } from "./teams.js";
-import type { UEFACompetition } from "./uefa/teams.js";
-
-import * as domesticApp from "./domesticApp.js";
-import * as uefaApp from "./uefaApp.js";
+import { createDomesticApp } from "./domestic/app.js";
+import { createUEFAApp } from "./uefa/uefa.js";
+import {
+    subscribeToLeagueChange,
+    updateLeagueSelector,
+    setupScrollToTopButton,
+} from "./ui.js";
 
 export let selectedLeague: LeagueList | UEFACompetition = "english";
 
+let activeApp: CompetitionApp;
+
 /**
  * Check if a league is a UEFA competition
- * @param {string} league
- * @return {boolean}
  */
 function isUEFACompetition(league: string): boolean {
     return ["ucl", "el", "cl"].includes(league);
+}
+
+/**
+ * Create the appropriate competition app for the given league.
+ */
+function createApp(league: LeagueList | UEFACompetition): CompetitionApp {
+    let app: CompetitionApp;
+
+    if (isUEFACompetition(league)) {
+        app = createUEFAApp(league as UEFACompetition);
+        app.init();
+        return app;
+    }
+
+    app = createDomesticApp(league as LeagueList);
+    app.init();
+    return app;
 }
 
 /**
@@ -29,15 +52,14 @@ function start(): void {
         updateLeagueSelector(selectedLeague);
     }
 
-    // Initialize the appropriate app
-    if (isUEFACompetition(selectedLeague)) {
-        uefaApp.init(selectedLeague as UEFACompetition);
-    } else {
-        domesticApp.init(selectedLeague as LeagueList);
-    }
+    activeApp = createApp(selectedLeague);
 
     // League-change subscription
     subscribeToLeagueChange(function (league) {
+        if (activeApp) {
+            activeApp.destroy();
+        }
+
         selectedLeague = league as LeagueList | UEFACompetition;
         storage.setSelectedLeague(league as LeagueList | UEFACompetition);
 
@@ -47,21 +69,11 @@ function start(): void {
 
         if (standingsSection) standingsSection.style.display = "";
 
-        // Re-initialize the appropriate app
-        const uefa = isUEFACompetition(league);
-        if (uefa) {
-            uefaApp.init(league as UEFACompetition);
-        } else {
-            domesticApp.init(league as LeagueList);
-        }
+        activeApp = createApp(selectedLeague);
     });
 
     document.getElementById("save-btn")?.addEventListener("click", function () {
-        if (isUEFACompetition(selectedLeague)) {
-            uefaApp.save();
-        } else {
-            domesticApp.save();
-        }
+        activeApp.save();
         alert("Saved!");
     });
 
@@ -69,11 +81,7 @@ function start(): void {
         .getElementById("reset-btn")
         ?.addEventListener("click", function () {
             if (confirm("Reset all scores to 0?")) {
-                if (isUEFACompetition(selectedLeague)) {
-                    uefaApp.reset();
-                } else {
-                    domesticApp.reset();
-                }
+                activeApp.reset();
             }
         });
 
@@ -85,27 +93,11 @@ function start(): void {
                     "Regenerate all fixtures? All current progress will be lost.",
                 )
             ) {
-                if (isUEFACompetition(selectedLeague)) {
-                    uefaApp.regenerate();
-                } else {
-                    domesticApp.regenerate();
-                }
+                activeApp.regenerate();
             }
         });
 
-    const scrollButton: HTMLElement | null =
-        document.getElementById("scroll-to-top");
-
-    if (scrollButton) {
-        window.addEventListener("scroll", function () {
-            scrollButton.style.display =
-                window.scrollY > 300 ? "block" : "none";
-        });
-
-        scrollButton.addEventListener("click", function () {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-    }
+    setupScrollToTopButton();
 }
 
 start();

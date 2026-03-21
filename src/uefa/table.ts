@@ -1,40 +1,9 @@
-import type { Match } from "./fixtures.js";
-import type { Teams } from "./teams.js";
-
-export interface Table {
-    [key: string]: TableRow;
-}
-
-export interface TableRow {
-    team: string;
-    played: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    gf: number;
-    gd: number;
-    ga: number;
-    points: number;
-    h2h: HeadToHead;
-}
-
-export interface HeadToHead {
-    [key: string]: H2HRecord;
-}
-
-export interface H2HRecord {
-    played: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    gf: number;
-    ga: number;
-}
+import type { Match } from "../interfaces/match.js";
+import type { Table, TableRow, H2HRecord } from "../interfaces/table.js";
+import type { Teams } from "../interfaces/tournament.js";
 
 /**
  * Initialize empty UEFA table for the league phase.
- * @param {string[]} teams - array of team names
- * @return {Table} table keyed by team name
  */
 export function initUEFATable(teams: Teams): Table {
     const table: Table = {};
@@ -60,9 +29,6 @@ export function initUEFATable(teams: Teams): Table {
 /**
  * Apply a single match result to the UEFA league table.
  * Skips matches that have not been played yet (null goals).
- * @param {Match} match
- * @param {Table} table
- * @return {void}
  */
 export function applyUEFAMatchResult(match: Match, table: Table): void {
     const { homeTeam, awayTeam, homeGoals, awayGoals } = match;
@@ -137,12 +103,67 @@ export function applyUEFAMatchResult(match: Match, table: Table): void {
 }
 
 /**
+ * Remove a single match result from the UEFA league table (undo applyUEFAMatchResult).
+ */
+export function removeUEFAMatchResult(match: Match, table: Table): void {
+    const { homeTeam, awayTeam, homeGoals, awayGoals } = match;
+
+    if (homeGoals == null || awayGoals == null) {
+        return;
+    }
+
+    const homeRow = table[homeTeam];
+    const awayRow = table[awayTeam];
+
+    if (!homeRow || !awayRow) return;
+
+    homeRow.played--;
+    awayRow.played--;
+
+    homeRow.gf -= homeGoals;
+    homeRow.ga -= awayGoals;
+
+    awayRow.gf -= awayGoals;
+    awayRow.ga -= homeGoals;
+
+    if (homeRow.h2h[awayTeam]) {
+        homeRow.h2h[awayTeam].played--;
+        homeRow.h2h[awayTeam].gf -= homeGoals;
+        homeRow.h2h[awayTeam].ga -= awayGoals;
+    }
+
+    if (awayRow.h2h[homeTeam]) {
+        awayRow.h2h[homeTeam].played--;
+        awayRow.h2h[homeTeam].gf -= awayGoals;
+        awayRow.h2h[homeTeam].ga -= homeGoals;
+    }
+
+    if (homeGoals > awayGoals) {
+        homeRow.points -= 3;
+        homeRow.wins--;
+        awayRow.losses--;
+        if (homeRow.h2h[awayTeam]) homeRow.h2h[awayTeam].wins--;
+        if (awayRow.h2h[homeTeam]) awayRow.h2h[homeTeam].losses--;
+    } else if (homeGoals < awayGoals) {
+        awayRow.points -= 3;
+        awayRow.wins--;
+        homeRow.losses--;
+        if (awayRow.h2h[homeTeam]) awayRow.h2h[homeTeam].wins--;
+        if (homeRow.h2h[awayTeam]) homeRow.h2h[awayTeam].losses--;
+    } else {
+        homeRow.points -= 1;
+        awayRow.points -= 1;
+        homeRow.draws--;
+        awayRow.draws--;
+        if (homeRow.h2h[awayTeam]) homeRow.h2h[awayTeam].draws--;
+        if (awayRow.h2h[homeTeam]) awayRow.h2h[homeTeam].draws--;
+    }
+}
+
+/**
  * Head-to-head tiebreaker for the Swiss-format league phase.
  * Returns negative if teamA is better (should appear first in descending sort),
  * positive if teamB is better, 0 if equal.
- * @param {TableRow} tableRowA
- * @param {TableRow} tableRowB
- * @return {number}
  */
 function getSwissH2HTiebreak(tableRowA: TableRow, tableRowB: TableRow): number {
     const h2hA: H2HRecord = tableRowA.h2h[tableRowB.team];
@@ -177,8 +198,6 @@ function getSwissH2HTiebreak(tableRowA: TableRow, tableRowB: TableRow): number {
 /**
  * Sort the league table in descending order (best team first).
  * Tiebreaker order: points -> H2H -> goal difference -> goals for -> alphabetical.
- * @param {Table} table
- * @return {TableRow[]}
  */
 export function sortUEFATable(table: Table): TableRow[] {
     return Object.values(table).sort(function (a, b) {
@@ -212,9 +231,6 @@ export function sortUEFATable(table: Table): TableRow[] {
 
 /**
  * Get teams qualifying for the next phase from the league table.
- * @param {Table} table
- * @param {number} numTeams - how many to take from the top
- * @return {string[]}
  */
 export function getQualifiedTeams(table: Table, numTeams: number): Teams {
     const sortedRows: TableRow[] = sortUEFATable(table);

@@ -1,14 +1,12 @@
+import type {
+    Teams,
+    TeamsByCompetition,
+    UEFACompetition,
+} from "../interfaces/tournament.js";
+
 /**
  * UEFA Competitions: Teams for Swiss Stage (36 teams each)
  */
-
-interface TeamsByCompetition {
-    [key: string]: string[];
-}
-
-export type UEFACompetition = "ucl" | "el" | "cl";
-export type Teams = string[];
-
 const uclTeams: Teams = [
     // Pot 1
     "Paris Saint-Germain",
@@ -101,7 +99,49 @@ const elTeams: Teams = [
     "Brann",
 ];
 
-const clTeams = Array.from({ length: 36 }, (_, i) => `CL Team ${i + 1}`);
+const clTeams: Teams = [
+    "Fiorentina",
+    "Roma",
+    "Aston Villa",
+    "West Ham United",
+    "RSC Anderlecht",
+    "Olympiacos",
+
+    "Legia Warszawa",
+    "Jagiellonia Białystok",
+    "Lech Poznań",
+    "Ferencváros",
+    "Čukarički",
+    "Zrinjski Mostar",
+
+    "Malmö FF",
+    "Brøndby IF",
+    "Rosenborg",
+    "Häcken",
+    "Bodø/Glimt",
+    "KÍ Klaksvík",
+
+    "Vitória SC",
+    "Rayo Vallecano",
+    "Celta Vigo",
+    "Panathinaikos",
+    "PAOK",
+    "Omonoia",
+
+    "AZ Alkmaar",
+    "Go Ahead Eagles",
+    "Utrecht",
+    "Gent",
+    "Genk",
+    "Beerschot",
+
+    "Shamrock Rovers",
+    "Aberdeen",
+    "Larne",
+    "Breiðablik",
+    "Hamrun Spartans",
+    "Lincoln Red Imps",
+];
 
 const uefaTeamsByCompetition: TeamsByCompetition = {
     ucl: uclTeams,
@@ -111,8 +151,6 @@ const uefaTeamsByCompetition: TeamsByCompetition = {
 
 /**
  * Get teams for a specific UEFA competition
- * @param {UEFACompetition} competition - "ucl", "el", or "cl"
- * @return {Teams} - array of team names
  */
 export function getUEFATeams(competition: UEFACompetition): Teams {
     return uefaTeamsByCompetition[competition] || [];
