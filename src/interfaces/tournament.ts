@@ -9,10 +9,15 @@ export type Phase =
 
 export type LeagueList =
     | "english"
+    | "english-2"
     | "french"
+    | "french-2"
     | "german"
+    | "german-2"
     | "italian"
+    | "italian-2"
     | "spanish"
+    | "spanish-2"
     | "russian"
     | "dutch"
     | "belgian"

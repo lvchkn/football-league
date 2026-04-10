@@ -275,6 +275,143 @@ const turkishLeague: League = {
     ],
 };
 
+const championship: League = {
+    key: "english-2",
+    name: "English Championship",
+    teams: [
+        "Birmingham City",
+        "Blackburn Rovers",
+        "Bristol City",
+        "Charlton Athletic",
+        "Coventry City",
+        "Derby County",
+        "Hull City",
+        "Ipswich Town",
+        "Leicester City",
+        "Middlesbrough",
+        "Millwall",
+        "Norwich City",
+        "Oxford United",
+        "Portsmouth",
+        "Preston North End",
+        "Queens Park Rangers",
+        "Sheffield United",
+        "Sheffield Wednesday",
+        "Southampton",
+        "Stoke City",
+        "Swansea City",
+        "Watford",
+        "West Bromwich Albion",
+        "Wrexham",
+    ],
+};
+
+const serieB: League = {
+    key: "italian-2",
+    name: "Italian Serie B",
+    teams: [
+        "Avellino",
+        "Bari",
+        "Carrarese",
+        "Catanzaro",
+        "Cesena",
+        "Empoli",
+        "Frosinone",
+        "Juve Stabia",
+        "Mantova",
+        "Modena",
+        "Monza",
+        "Padova",
+        "Palermo",
+        "Pescara",
+        "Reggiana",
+        "Sampdoria",
+        "Spezia",
+        "Südtirol",
+        "Venezia",
+        "Virtus Entella",
+    ],
+};
+
+const segunda: League = {
+    key: "spanish-2",
+    name: "Spanish Segunda División",
+    teams: [
+        "Albacete",
+        "Almería",
+        "Burgos",
+        "Cádiz",
+        "Castellón",
+        "Ceuta",
+        "Córdoba",
+        "Cultural Leonesa",
+        "Deportivo La Coruña",
+        "Eibar",
+        "FC Andorra",
+        "Granada",
+        "Huesca",
+        "Las Palmas",
+        "Leganés",
+        "Málaga",
+        "Mirandés",
+        "Racing Santander",
+        "Real Sociedad B",
+        "Real Valladolid",
+        "Real Zaragoza",
+        "Sporting Gijón",
+    ],
+};
+
+const bundesliga2: League = {
+    key: "german-2",
+    name: "German Bundesliga 2",
+    teams: [
+        "Arminia Bielefeld",
+        "VfL Bochum",
+        "Eintracht Braunschweig",
+        "Darmstadt 98",
+        "Dynamo Dresden",
+        "Fortuna Düsseldorf",
+        "SV Elversberg",
+        "Greuther Fürth",
+        "Hannover 96",
+        "Hertha BSC",
+        "1. FC Kaiserslautern",
+        "Karlsruher SC",
+        "Holstein Kiel",
+        "1. FC Magdeburg",
+        "Preußen Münster",
+        "1. FC Nürnberg",
+        "SC Paderborn",
+        "Schalke 04",
+    ],
+};
+
+const ligue2: League = {
+    key: "french-2",
+    name: "French Ligue 2",
+    teams: [
+        "Amiens",
+        "Annecy",
+        "Bastia",
+        "Boulogne",
+        "Dunkerque",
+        "Guingamp",
+        "Laval",
+        "Le Mans",
+        "Montpellier",
+        "Nancy",
+        "Pau FC",
+        "Red Star",
+        "Reims",
+        "Rodez",
+        "Saint-Étienne",
+        "Grenoble",
+        "Troyes",
+        "Valenciennes",
+    ],
+};
+
 /**
  * Get teams by league name.
  */
@@ -302,6 +439,16 @@ export function getTeamsByLeague(league: LeagueList): Teams {
             return greekLeague.teams;
         case turkishLeague.key:
             return turkishLeague.teams;
+        case championship.key:
+            return championship.teams;
+        case serieB.key:
+            return serieB.teams;
+        case segunda.key:
+            return segunda.teams;
+        case bundesliga2.key:
+            return bundesliga2.teams;
+        case ligue2.key:
+            return ligue2.teams;
         default:
             return [];
     }
