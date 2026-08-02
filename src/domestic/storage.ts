@@ -56,7 +56,9 @@ function _getExpectedVersion(
     return getRosterVersionByLeague(league as LeagueList);
 }
 
-function _readStoredVersion(league: LeagueList | UEFACompetition): string | null {
+function _readStoredVersion(
+    league: LeagueList | UEFACompetition,
+): string | null {
     try {
         const version = localStorage.getItem(_getVersionKey(league));
         return version || null;

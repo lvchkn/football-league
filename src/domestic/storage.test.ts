@@ -70,11 +70,18 @@ describe("domestic fixture storage", () => {
         setFixturesStructure(fixtures, league);
         setFixturesImmediate(fixtures, league);
 
-        memoryStorage.setItem("football-league:fixtures-version:english", "stale-version");
+        memoryStorage.setItem(
+            "football-league:fixtures-version:english",
+            "stale-version",
+        );
 
         expect(getFixturesStructure(league)).toBeNull();
         expect(getFixtures(league)).toBeNull();
-        expect(memoryStorage.getItem("football-league:fixtures:english")).toBeNull();
-        expect(memoryStorage.getItem("football-league:fixtures-structure:english")).toBeNull();
+        expect(
+            memoryStorage.getItem("football-league:fixtures:english"),
+        ).toBeNull();
+        expect(
+            memoryStorage.getItem("football-league:fixtures-structure:english"),
+        ).toBeNull();
     });
 });

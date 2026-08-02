@@ -5,6 +5,9 @@ import {
     getFixturesStructure,
     setFixturesImmediate,
     setFixturesStructure,
+    setPhase,
+    setPhaseContext,
+    setQualifiedTeams,
 } from "./storage.js";
 import type { Round } from "../interfaces/round.js";
 import type { UEFACompetition } from "../interfaces/tournament.js";
@@ -62,14 +65,25 @@ describe("UEFA fixture storage", () => {
     });
 
     it("reuses saved fixtures when the roster version matches", () => {
-        expect(setFixturesStructure(fixtures, competition, "version-1")).toBe(true);
+        expect(setFixturesStructure(fixtures, competition, "version-1")).toBe(
+            true,
+        );
         expect(getFixturesStructure(competition, "version-1")).toEqual([
             [{ homeTeam: "A", awayTeam: "B", leg: null, tieIndex: null }],
         ]);
 
-        expect(setFixturesImmediate(fixtures, competition, "version-1")).toBe(true);
+        expect(setFixturesImmediate(fixtures, competition, "version-1")).toBe(
+            true,
+        );
         expect(getFixtures(competition, "version-1")).toEqual([
-            [{ homeTeam: "A", awayTeam: "B", homeGoals: null, awayGoals: null }],
+            [
+                {
+                    homeTeam: "A",
+                    awayTeam: "B",
+                    homeGoals: null,
+                    awayGoals: null,
+                },
+            ],
         ]);
     });
 
@@ -84,9 +98,38 @@ describe("UEFA fixture storage", () => {
 
         expect(getFixturesStructure(competition, "version-2")).toBeNull();
         expect(getFixtures(competition, "version-2")).toBeNull();
-        expect(memoryStorage.getItem("football-league:uefa:fixtures:ucl")).toBeNull();
         expect(
-            memoryStorage.getItem("football-league:uefa:fixtures-structure:ucl"),
+            memoryStorage.getItem("football-league:uefa:fixtures:ucl"),
+        ).toBeNull();
+        expect(
+            memoryStorage.getItem(
+                "football-league:uefa:fixtures-structure:ucl",
+            ),
+        ).toBeNull();
+    });
+
+    it("clears UEFA phase progress when fixtures are invalidated", () => {
+        setFixturesStructure(fixtures, competition, "version-1");
+        setFixturesImmediate(fixtures, competition, "version-1");
+        setPhase(competition, "playoffs");
+        setPhaseContext(competition, { playoffTeams: ["A", "B"] });
+        setQualifiedTeams(competition, ["A", "B", "C"]);
+
+        memoryStorage.setItem(
+            "football-league:uefa:fixtures-version:ucl",
+            "stale-version",
+        );
+
+        expect(getFixturesStructure(competition, "version-2")).toBeNull();
+        expect(getFixtures(competition, "version-2")).toBeNull();
+        expect(
+            memoryStorage.getItem("football-league:uefa:phase:ucl"),
+        ).toBeNull();
+        expect(
+            memoryStorage.getItem("football-league:uefa:phase-context:ucl"),
+        ).toBeNull();
+        expect(
+            memoryStorage.getItem("football-league:uefa:qualified-teams:ucl"),
         ).toBeNull();
     });
 });

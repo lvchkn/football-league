@@ -12,6 +12,7 @@ import type {
     UEFACompetition,
     UEFAContext,
 } from "../interfaces/tournament.js";
+import { computeRosterVersion } from "../utils/roster-version.js";
 import { getUEFATeams } from "./teams.js";
 
 const FIXTURES_KEY_PREFIX = "football-league:uefa:fixtures:";
@@ -63,18 +64,8 @@ function _getExpectedVersion(
     providedVersion?: string | null,
 ): string | null {
     if (providedVersion) return providedVersion;
-    const teams = getUEFATeams(competition);
-    if (!teams.length) return null;
 
-    let hash = 0;
-    teams.forEach((team) => {
-        for (let index = 0; index < team.length; index += 1) {
-            hash = (hash * 31 + team.charCodeAt(index)) >>> 0;
-        }
-        hash = (hash * 31 + 17) >>> 0;
-    });
-
-    return hash.toString(16);
+    return computeRosterVersion(getUEFATeams(competition));
 }
 
 function _readStoredVersion(competition: UEFACompetition): string | null {
@@ -112,6 +103,9 @@ function _clearPersistedFixtures(competition: UEFACompetition): void {
         localStorage.removeItem(_fixturesKey(competition));
         localStorage.removeItem(_structureKey(competition));
         localStorage.removeItem(_versionKey(competition));
+        localStorage.removeItem(_phaseKey(competition));
+        localStorage.removeItem(_phaseContextKey(competition));
+        localStorage.removeItem(_qualifiedKey(competition));
     } catch {
         return;
     }
@@ -135,7 +129,10 @@ function _setFixtures(
             _fixturesKey(competition),
             JSON.stringify(fixtures),
         );
-        _writeVersion(competition, _getExpectedVersion(competition, rosterVersion));
+        _writeVersion(
+            competition,
+            _getExpectedVersion(competition, rosterVersion),
+        );
         return true;
     } catch (e) {
         return false;
@@ -148,7 +145,10 @@ export function getFixtures(
 ) {
     const expectedVersion = _getExpectedVersion(competition, rosterVersion);
 
-    if (expectedVersion && !_isPersistedDataValid(competition, expectedVersion)) {
+    if (
+        expectedVersion &&
+        !_isPersistedDataValid(competition, expectedVersion)
+    ) {
         _clearPersistedFixtures(competition);
         return null;
     }
@@ -201,7 +201,10 @@ export function getFixturesStructure(
 ) {
     const expectedVersion = _getExpectedVersion(competition, rosterVersion);
 
-    if (expectedVersion && !_isPersistedDataValid(competition, expectedVersion)) {
+    if (
+        expectedVersion &&
+        !_isPersistedDataValid(competition, expectedVersion)
+    ) {
         _clearPersistedFixtures(competition);
         return null;
     }
@@ -250,7 +253,10 @@ export function setFixturesStructure(
             _structureKey(competition),
             JSON.stringify(structure),
         );
-        _writeVersion(competition, _getExpectedVersion(competition, rosterVersion));
+        _writeVersion(
+            competition,
+            _getExpectedVersion(competition, rosterVersion),
+        );
         return true;
     } catch (e) {
         return false;

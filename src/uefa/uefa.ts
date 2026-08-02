@@ -23,7 +23,12 @@ import {
     removeUEFAMatchResult,
     sortUEFATable,
 } from "./table.js";
+import { computeRosterVersion } from "../utils/roster-version.js";
 import { shuffleArray } from "../utils/shuffle.js";
+
+function getUefaRosterVersion(competition: UEFACompetition): string | null {
+    return computeRosterVersion(getUEFATeams(competition));
+}
 
 /**
  * Create a UEFA competition app for the given competition.
@@ -69,9 +74,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
      * Load fixtures from storage or generate fresh ones.
      */
     function initializeFixtures(): void {
-        const rosterVersion = getUEFATeams(competition)
-            .map((team) => team)
-            .join("|");
+        const rosterVersion = getUefaRosterVersion(competition);
         currentUEFAPhase = uefaStorage.getPhase(competition) || "league";
         const structure = uefaStorage.getFixturesStructure(
             competition,
@@ -168,7 +171,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
             uefaStorage.setFixturesDebounced(
                 fixtures as Round[],
                 competition,
-                getUEFATeams(competition).join("|"),
+                getUefaRosterVersion(competition),
             );
         };
 
@@ -396,12 +399,12 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         uefaStorage.setFixturesStructure(
             fixtures as Round[],
             competition,
-            getUEFATeams(competition).join("|"),
+            getUefaRosterVersion(competition),
         );
         uefaStorage.setFixturesImmediate(
             fixtures as Round[],
             competition,
-            getUEFATeams(competition).join("|"),
+            getUefaRosterVersion(competition),
         );
 
         recalcTable();
@@ -430,7 +433,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         uefaStorage.setFixturesStructure(
             fixtures,
             competition,
-            getUEFATeams(competition).join("|"),
+            getUefaRosterVersion(competition),
         );
 
         recalcTable();
@@ -441,7 +444,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         uefaStorage.setFixturesImmediate(
             fixtures as Round[],
             competition,
-            getUEFATeams(competition).join("|"),
+            getUefaRosterVersion(competition),
         );
     }
 
@@ -471,7 +474,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         uefaStorage.setFixturesImmediate(
             fixtures as Round[],
             competition,
-            getUEFATeams(competition).join("|"),
+            getUefaRosterVersion(competition),
         );
     }
 

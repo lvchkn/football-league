@@ -1,17 +1,5 @@
 import type { League, LeagueList, Teams } from "../interfaces/tournament.js";
-
-function computeRosterVersion(teams: Teams): string {
-    let hash = 0;
-
-    teams.forEach((team) => {
-        for (let index = 0; index < team.length; index += 1) {
-            hash = (hash * 31 + team.charCodeAt(index)) >>> 0;
-        }
-        hash = (hash * 31 + 17) >>> 0;
-    });
-
-    return hash.toString(16);
-}
+import { computeRosterVersion } from "../utils/roster-version.js";
 
 export function getRosterVersionByLeague(
     league: LeagueList | string,
