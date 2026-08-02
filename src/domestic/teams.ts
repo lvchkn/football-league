@@ -1,5 +1,29 @@
 import type { League, LeagueList, Teams } from "../interfaces/tournament.js";
 
+function computeRosterVersion(teams: Teams): string {
+    let hash = 0;
+
+    teams.forEach((team) => {
+        for (let index = 0; index < team.length; index += 1) {
+            hash = (hash * 31 + team.charCodeAt(index)) >>> 0;
+        }
+        hash = (hash * 31 + 17) >>> 0;
+    });
+
+    return hash.toString(16);
+}
+
+export function getRosterVersionByLeague(
+    league: LeagueList | string,
+): string | null {
+    if (!league) return null;
+
+    const teams = getTeamsByLeague(league as LeagueList);
+    if (!teams.length) return null;
+
+    return computeRosterVersion(teams);
+}
+
 const englishLeague: League = {
     key: "english",
     name: "English Premier League",
