@@ -23,7 +23,12 @@ import {
     removeUEFAMatchResult,
     sortUEFATable,
 } from "./table.js";
+import { computeRosterVersion } from "../utils/roster-version.js";
 import { shuffleArray } from "../utils/shuffle.js";
+
+function getUefaRosterVersion(competition: UEFACompetition): string | null {
+    return computeRosterVersion(getUEFATeams(competition));
+}
 
 /**
  * Create a UEFA competition app for the given competition.
@@ -69,8 +74,12 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
      * Load fixtures from storage or generate fresh ones.
      */
     function initializeFixtures(): void {
+        const rosterVersion = getUefaRosterVersion(competition);
         currentUEFAPhase = uefaStorage.getPhase(competition) || "league";
-        const structure = uefaStorage.getFixturesStructure(competition);
+        const structure = uefaStorage.getFixturesStructure(
+            competition,
+            rosterVersion,
+        );
 
         if (structure) {
             fixtures = structure.map(function (round: any[]) {
@@ -98,13 +107,20 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                 {},
             ) as LeaguePhase;
 
-            uefaStorage.setFixturesStructure(fixtures, competition);
+            uefaStorage.setFixturesStructure(
+                fixtures,
+                competition,
+                rosterVersion,
+            );
             uefaStorage.setPhase(competition, currentUEFAPhase);
         }
 
         // Merge saved results
         try {
-            const savedFixtures = uefaStorage.getFixtures(competition);
+            const savedFixtures = uefaStorage.getFixtures(
+                competition,
+                rosterVersion,
+            );
 
             if (savedFixtures && Array.isArray(savedFixtures)) {
                 for (
@@ -152,7 +168,11 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
     function renderAllFixtures(): void {
         const onResultsApplied = function (updates: MatchUpdate[]) {
             updateTableIncrementally(updates);
-            uefaStorage.setFixturesDebounced(fixtures as Round[], competition);
+            uefaStorage.setFixturesDebounced(
+                fixtures as Round[],
+                competition,
+                getUefaRosterVersion(competition),
+            );
         };
 
         renderUEFAFixtures(
@@ -376,8 +396,16 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         fixtures = finalFixtures;
 
         uefaStorage.setPhase(competition, nextPhase);
-        uefaStorage.setFixturesStructure(fixtures as Round[], competition);
-        uefaStorage.setFixturesImmediate(fixtures as Round[], competition);
+        uefaStorage.setFixturesStructure(
+            fixtures as Round[],
+            competition,
+            getUefaRosterVersion(competition),
+        );
+        uefaStorage.setFixturesImmediate(
+            fixtures as Round[],
+            competition,
+            getUefaRosterVersion(competition),
+        );
 
         recalcTable();
         renderAllFixtures();
@@ -402,14 +430,22 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         ) as LeaguePhase;
 
         uefaStorage.setPhase(competition, currentUEFAPhase);
-        uefaStorage.setFixturesStructure(fixtures, competition);
+        uefaStorage.setFixturesStructure(
+            fixtures,
+            competition,
+            getUefaRosterVersion(competition),
+        );
 
         recalcTable();
         renderAllFixtures();
     }
 
     function save(): void {
-        uefaStorage.setFixturesImmediate(fixtures as Round[], competition);
+        uefaStorage.setFixturesImmediate(
+            fixtures as Round[],
+            competition,
+            getUefaRosterVersion(competition),
+        );
     }
 
     function reset(): void {
@@ -435,7 +471,11 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         }) as LeaguePhase | KnockoutRound | Match;
         recalcTable();
         renderAllFixtures();
-        uefaStorage.setFixturesImmediate(fixtures as Round[], competition);
+        uefaStorage.setFixturesImmediate(
+            fixtures as Round[],
+            competition,
+            getUefaRosterVersion(competition),
+        );
     }
 
     function destroy(): void {

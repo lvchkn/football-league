@@ -1,12 +1,14 @@
 import type { MatchResult, LeagueMatch } from "../interfaces/match.js";
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
 import type { LeagueList, UEFACompetition } from "../interfaces/tournament.js";
+import { getRosterVersionByLeague } from "./teams.js";
 
 /**
  * Minimal storage helper: persist data to localStorage.
  */
 const FIXTURES_KEY_PREFIX = "football-league:fixtures:";
 const FIXTURES_STRUCTURE_KEY_PREFIX = "football-league:fixtures-structure:";
+const FIXTURES_VERSION_KEY_PREFIX = "football-league:fixtures-version:";
 const DEBOUNCE_MS = 300;
 
 const pendingSaves = new Map<string, ReturnType<typeof setTimeout>>();
@@ -37,6 +39,73 @@ function _getStructureKey(league: LeagueList | UEFACompetition): string {
     return `${FIXTURES_STRUCTURE_KEY_PREFIX}${league || "english"}`;
 }
 
+function _getVersionKey(league: LeagueList | UEFACompetition): string {
+    return `${FIXTURES_VERSION_KEY_PREFIX}${league || "english"}`;
+}
+
+function _getExpectedVersion(
+    league: LeagueList | UEFACompetition,
+    providedVersion?: string | null,
+): string | null {
+    if (providedVersion) return providedVersion;
+
+    if (league === "ucl" || league === "el" || league === "cl") {
+        return null;
+    }
+
+    return getRosterVersionByLeague(league as LeagueList);
+}
+
+function _readStoredVersion(
+    league: LeagueList | UEFACompetition,
+): string | null {
+    try {
+        const version = localStorage.getItem(_getVersionKey(league));
+        return version || null;
+    } catch {
+        return null;
+    }
+}
+
+function _writeVersion(
+    league: LeagueList | UEFACompetition,
+    version: string | null,
+): boolean {
+    if (!version) {
+        try {
+            localStorage.removeItem(_getVersionKey(league));
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    try {
+        localStorage.setItem(_getVersionKey(league), version);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function _clearPersistedFixtures(league: LeagueList | UEFACompetition): void {
+    try {
+        localStorage.removeItem(_getFixturesKey(league));
+        localStorage.removeItem(_getStructureKey(league));
+        localStorage.removeItem(_getVersionKey(league));
+    } catch {
+        return;
+    }
+}
+
+function _isPersistedDataValid(
+    league: LeagueList | UEFACompetition,
+    expectedVersion: string | null,
+): boolean {
+    if (!expectedVersion) return true;
+    return _readStoredVersion(league) === expectedVersion;
+}
+
 /**
  * Extract minimal results from full fixtures: nested arrays with {homeGoals, awayGoals} or null.
  */
@@ -60,7 +129,17 @@ function _extractMinimal(fixtures: LeaguePhase): (MatchResult | null)[][] {
 /**
  * Load persisted minimal results from localStorage.
  */
-export function getFixtures(league: LeagueList | UEFACompetition) {
+export function getFixtures(
+    league: LeagueList | UEFACompetition,
+    rosterVersion?: string | null,
+) {
+    const expectedVersion = _getExpectedVersion(league, rosterVersion);
+
+    if (expectedVersion && !_isPersistedDataValid(league, expectedVersion)) {
+        _clearPersistedFixtures(league);
+        return null;
+    }
+
     try {
         const fixtures = localStorage.getItem(_getFixturesKey(league));
         if (!fixtures) return null;
@@ -76,9 +155,13 @@ export function getFixtures(league: LeagueList | UEFACompetition) {
 function _setFixtures(
     fixtures: LeaguePhase | (MatchResult | null)[][],
     league: LeagueList | UEFACompetition,
+    rosterVersion?: string | null,
 ): boolean {
+    const expectedVersion = _getExpectedVersion(league, rosterVersion);
+
     try {
         localStorage.setItem(_getFixturesKey(league), JSON.stringify(fixtures));
+        _writeVersion(league, expectedVersion);
         return true;
     } catch (e) {
         return false;
@@ -91,6 +174,7 @@ function _setFixtures(
 export function setFixturesDebounced(
     fixtures: LeaguePhase,
     league: LeagueList | UEFACompetition,
+    rosterVersion?: string | null,
 ) {
     const key = league || "english";
     const existing = pendingSaves.get(key);
@@ -98,7 +182,7 @@ export function setFixturesDebounced(
 
     const minimal = _extractMinimal(fixtures);
     const timeout = setTimeout(() => {
-        _setFixtures(minimal, league);
+        _setFixtures(minimal, league, rosterVersion);
         pendingSaves.delete(key);
     }, DEBOUNCE_MS);
 
@@ -111,6 +195,7 @@ export function setFixturesDebounced(
 export function setFixturesImmediate(
     fixtures: LeaguePhase,
     league: LeagueList | UEFACompetition,
+    rosterVersion?: string | null,
 ): boolean {
     const key = league || "english";
     const existing = pendingSaves.get(key);
@@ -118,7 +203,7 @@ export function setFixturesImmediate(
         clearTimeout(existing);
         pendingSaves.delete(key);
     }
-    return _setFixtures(_extractMinimal(fixtures), league);
+    return _setFixtures(_extractMinimal(fixtures), league, rosterVersion);
 }
 
 /**
@@ -131,11 +216,7 @@ export function clearSavedFixtures(league: LeagueList | UEFACompetition): void {
         clearTimeout(existing);
         pendingSaves.delete(key);
     }
-    try {
-        localStorage.removeItem(_getFixturesKey(league));
-    } catch (e) {
-        return;
-    }
+    _clearPersistedFixtures(league);
 }
 
 /**
@@ -144,7 +225,10 @@ export function clearSavedFixtures(league: LeagueList | UEFACompetition): void {
 export function setFixturesStructure(
     fixtures: LeaguePhase,
     league: LeagueList | UEFACompetition,
+    rosterVersion?: string | null,
 ) {
+    const expectedVersion = _getExpectedVersion(league, rosterVersion);
+
     try {
         const structure = fixtures.map((round) =>
             round.matches.map((match) => ({
@@ -156,6 +240,7 @@ export function setFixturesStructure(
             _getStructureKey(league),
             JSON.stringify(structure),
         );
+        _writeVersion(league, expectedVersion);
         return true;
     } catch (e) {
         return false;
@@ -165,7 +250,17 @@ export function setFixturesStructure(
 /**
  * Load the fixture structure from localStorage.
  */
-export function getFixturesStructure(league: LeagueList | UEFACompetition) {
+export function getFixturesStructure(
+    league: LeagueList | UEFACompetition,
+    rosterVersion?: string | null,
+) {
+    const expectedVersion = _getExpectedVersion(league, rosterVersion);
+
+    if (expectedVersion && !_isPersistedDataValid(league, expectedVersion)) {
+        _clearPersistedFixtures(league);
+        return null;
+    }
+
     try {
         const structure = localStorage.getItem(_getStructureKey(league));
         if (!structure) return null;
@@ -185,10 +280,5 @@ export function clearAll(league: LeagueList | UEFACompetition): void {
         clearTimeout(existing);
         pendingSaves.delete(key);
     }
-    try {
-        localStorage.removeItem(_getFixturesKey(league));
-        localStorage.removeItem(_getStructureKey(league));
-    } catch (e) {
-        return;
-    }
+    _clearPersistedFixtures(league);
 }

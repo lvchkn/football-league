@@ -9,7 +9,7 @@ import type {
 
 import * as storage from "./storage.js";
 import { applyMatchResult, initTable, removeMatchResult } from "./table.js";
-import { getTeamsByLeague } from "./teams.js";
+import { getRosterVersionByLeague, getTeamsByLeague } from "./teams.js";
 import { renderFixtures, renderTable } from "./ui.js";
 import { generateFixtures } from "./fixtures.js";
 import { shuffleArray } from "../utils/shuffle.js";
@@ -51,7 +51,8 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
      * Load fixtures from storage or generate fresh ones.
      */
     function initializeFixtures(): void {
-        const structure = storage.getFixturesStructure(league);
+        const rosterVersion = getRosterVersionByLeague(league);
+        const structure = storage.getFixturesStructure(league, rosterVersion);
 
         if (structure) {
             fixtures = structure.map(function (round: any[]) {
@@ -68,12 +69,12 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
             });
         } else {
             fixtures = generateFixtures(teams);
-            storage.setFixturesStructure(fixtures, league);
+            storage.setFixturesStructure(fixtures, league, rosterVersion);
         }
 
         // Merge saved results
         try {
-            const savedFixtures = storage.getFixtures(league);
+            const savedFixtures = storage.getFixtures(league, rosterVersion);
 
             if (savedFixtures && Array.isArray(savedFixtures)) {
                 for (
@@ -114,7 +115,11 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
     function renderAllFixtures(): void {
         const onResultsApplied = function (updates: MatchUpdate[]) {
             updateTableIncrementally(updates);
-            storage.setFixturesDebounced(fixtures, league);
+            storage.setFixturesDebounced(
+                fixtures,
+                league,
+                getRosterVersionByLeague(league),
+            );
         };
 
         renderFixtures(fixtures, onResultsApplied);
@@ -130,13 +135,21 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
     function regenerate(): void {
         storage.clearAll(league);
         fixtures = generateFixtures(shuffleArray(teams));
-        storage.setFixturesStructure(fixtures, league);
+        storage.setFixturesStructure(
+            fixtures,
+            league,
+            getRosterVersionByLeague(league),
+        );
         recalcTable();
         renderAllFixtures();
     }
 
     function save(): void {
-        storage.setFixturesImmediate(fixtures, league);
+        storage.setFixturesImmediate(
+            fixtures,
+            league,
+            getRosterVersionByLeague(league),
+        );
     }
 
     function reset(): void {
@@ -155,7 +168,11 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
 
         recalcTable();
         renderAllFixtures();
-        storage.setFixturesImmediate(fixtures, league);
+        storage.setFixturesImmediate(
+            fixtures,
+            league,
+            getRosterVersionByLeague(league),
+        );
     }
 
     function destroy(): void {
