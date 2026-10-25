@@ -62,6 +62,22 @@ describe("League Table Logic", () => {
             expect(table[Liverpool].gf).toBe(0);
             expect(table[Liverpool].ga).toBe(2);
             expect(table[Liverpool].played).toBe(1);
+            expect(table[Arsenal].h2h[Liverpool]).toEqual({
+                played: 1,
+                wins: 1,
+                draws: 0,
+                losses: 0,
+                gf: 2,
+                ga: 0,
+            });
+            expect(table[Liverpool].h2h[Arsenal]).toEqual({
+                played: 1,
+                wins: 0,
+                draws: 0,
+                losses: 1,
+                gf: 0,
+                ga: 2,
+            });
         });
 
         it("should properly apply an away win", () => {
@@ -108,6 +124,8 @@ describe("League Table Logic", () => {
 
             expect(table[Arsenal].played).toBe(0);
             expect(table[Liverpool].played).toBe(0);
+            expect(table[Arsenal].h2h[Liverpool]).toBeUndefined();
+            expect(table[Liverpool].h2h[Arsenal]).toBeUndefined();
         });
     });
 
@@ -140,6 +158,8 @@ describe("League Table Logic", () => {
             expect(table[Liverpool].points).toBe(0);
             expect(table[Liverpool].losses).toBe(0);
             expect(table[Liverpool].played).toBe(0);
+            expect(table[Arsenal].h2h[Liverpool]).toBeUndefined();
+            expect(table[Liverpool].h2h[Arsenal]).toBeUndefined();
         });
 
         it("should properly remove a draw", () => {
@@ -186,6 +206,84 @@ describe("League Table Logic", () => {
             const sorted = sortTable(table);
             expect(sorted[0].team).toBe(Liverpool); // GD 3 vs GD 1
             expect(sorted[1].team).toBe(Arsenal);
+        });
+
+        it("should use a completed head-to-head result before overall goal difference", () => {
+            const table = initTable([Arsenal, Liverpool]);
+            applyMatchResult(
+                {
+                    homeTeam: Arsenal,
+                    awayTeam: Liverpool,
+                    homeGoals: 1,
+                    awayGoals: 0,
+                },
+                table,
+            );
+
+            table[Arsenal].points = 10;
+            table[Arsenal].gf = 10;
+            table[Arsenal].ga = 10;
+            table[Liverpool].points = 10;
+            table[Liverpool].gf = 20;
+            table[Liverpool].ga = 5;
+
+            const sorted = sortTable(table);
+            expect(sorted.map((row) => row.team)).toEqual([
+                Arsenal,
+                Liverpool,
+            ]);
+        });
+
+        it("should use a head-to-head mini-table for multi-team ties", () => {
+            const table = initTable([Arsenal, Liverpool, ManchesterUnited]);
+            const directMatches: Match[] = [
+                {
+                    homeTeam: Arsenal,
+                    awayTeam: Liverpool,
+                    homeGoals: 2,
+                    awayGoals: 0,
+                },
+                {
+                    homeTeam: Liverpool,
+                    awayTeam: ManchesterUnited,
+                    homeGoals: 1,
+                    awayGoals: 0,
+                },
+                {
+                    homeTeam: ManchesterUnited,
+                    awayTeam: Arsenal,
+                    homeGoals: 1,
+                    awayGoals: 0,
+                },
+            ];
+            directMatches.forEach((match) => applyMatchResult(match, table));
+
+            table[Arsenal].points = 20;
+            table[Liverpool].points = 20;
+            table[ManchesterUnited].points = 20;
+
+            const sorted = sortTable(table);
+            expect(sorted.map((row) => row.team)).toEqual([
+                Arsenal,
+                ManchesterUnited,
+                Liverpool,
+            ]);
+        });
+
+        it("should fall back to overall goal difference without a direct result", () => {
+            const table = initTable([Arsenal, Liverpool]);
+            table[Arsenal].points = 10;
+            table[Arsenal].gf = 12;
+            table[Arsenal].ga = 10;
+            table[Liverpool].points = 10;
+            table[Liverpool].gf = 15;
+            table[Liverpool].ga = 10;
+
+            const sorted = sortTable(table);
+            expect(sorted.map((row) => row.team)).toEqual([
+                Liverpool,
+                Arsenal,
+            ]);
         });
 
         it("should sort teams by goals scored if points and goal difference are tied", () => {

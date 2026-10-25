@@ -1,3 +1,5 @@
+import type { Round } from "./round.js";
+
 export type Phase =
     | "league"
     | "playoffs"
@@ -41,6 +43,14 @@ export interface UEFAContext {
     playoffWinners?: string[];
     qualifiedTeams?: string[];
     finalists?: string[];
+}
+
+/**
+ * A completed UEFA phase preserved for read-only result browsing.
+ */
+export interface UEFAHistoryEntry {
+    phase: Phase;
+    fixtures: Round[];
 }
 
 export interface TeamsByCompetition {

@@ -7,6 +7,7 @@ import type {
     Phase,
     UEFAContext,
     CompetitionApp,
+    UEFAHistoryEntry,
 } from "../interfaces/tournament.js";
 
 import * as uefaStorage from "./storage.js";
@@ -15,6 +16,7 @@ import { getUEFATeams } from "./teams.js";
 import {
     renderPhaseProgressionButtons,
     renderUEFAFixtures,
+    renderUEFAHistoryControls,
     renderUEFATable,
 } from "./ui.js";
 import {
@@ -39,6 +41,8 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
     const competition: UEFACompetition = selectedComp;
     let teams: Teams = [];
     let currentUEFAPhase: Phase = "league";
+    let history: UEFAHistoryEntry[] = [];
+    let viewedHistoryPhase: Phase | null = null;
 
     /**
      * Recalculate the UEFA league table from fixtures.
@@ -153,6 +157,12 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                                 result.homeGoals;
                             (fixtures as Round[])[r].matches[match].awayGoals =
                                 result.awayGoals;
+                            (fixtures as Round[])[r].matches[
+                                match
+                            ].homePenalties = result.homePenalties;
+                            (fixtures as Round[])[r].matches[
+                                match
+                            ].awayPenalties = result.awayPenalties;
                         }
                     }
                 }
@@ -160,12 +170,26 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         } catch (e) {
             console.warn("Failed to load saved results", e);
         }
+
+        history = uefaStorage.getHistory(competition, rosterVersion);
     }
 
     /**
      * Render all fixtures for the current UEFA phase.
      */
     function renderAllFixtures(): void {
+        const historyEntry = viewedHistoryPhase
+            ? history.find((entry) => entry.phase === viewedHistoryPhase)
+            : undefined;
+        const displayedFixtures: Round[] = historyEntry
+            ? historyEntry.fixtures
+            : (fixtures as Round[]);
+        const displayedPhase: Phase = historyEntry
+            ? historyEntry.phase
+            : currentUEFAPhase;
+        const readOnly =
+            Boolean(historyEntry) || currentUEFAPhase === "finished";
+
         const onResultsApplied = function (updates: MatchUpdate[]) {
             updateTableIncrementally(updates);
             uefaStorage.setFixturesDebounced(
@@ -173,21 +197,48 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                 competition,
                 getUefaRosterVersion(competition),
             );
+            if (currentUEFAPhase !== "league") {
+                renderAllFixtures();
+            }
         };
 
         renderUEFAFixtures(
-            currentUEFAPhase === "league"
-                ? (fixtures as LeaguePhase)
-                : (fixtures as KnockoutRound[]),
+            displayedFixtures,
             onResultsApplied,
-            currentUEFAPhase,
+            displayedPhase,
+            readOnly,
         );
 
-        if (currentUEFAPhase !== "finished") {
+        renderUEFAHistoryControls(
+            history,
+            currentUEFAPhase,
+            viewedHistoryPhase,
+            function (phase: Phase) {
+                viewedHistoryPhase = phase;
+                renderAllFixtures();
+            },
+            function () {
+                viewedHistoryPhase = null;
+                renderAllFixtures();
+            },
+        );
+
+        if (!readOnly && currentUEFAPhase !== "finished") {
             renderPhaseProgressionButtons(function () {
                 progressPhase();
             });
         }
+    }
+
+    function archiveCurrentPhase(): void {
+        const rosterVersion = getUefaRosterVersion(competition);
+        uefaStorage.archivePhase(
+            competition,
+            currentUEFAPhase,
+            fixtures as Round[],
+            rosterVersion,
+        );
+        history = uefaStorage.getHistory(competition, rosterVersion);
     }
 
     /**
@@ -368,13 +419,43 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                 } else if (finalMatch.awayGoals > finalMatch.homeGoals) {
                     champion = finalMatch.awayTeam;
                 } else {
-                    champion = finalMatch.homeTeam; // Draw simulating penalties
+                    const homePenalties = finalMatch.homePenalties;
+                    const awayPenalties = finalMatch.awayPenalties;
+                    const hasDecisivePenalties =
+                        typeof homePenalties === "number" &&
+                        typeof awayPenalties === "number" &&
+                        Number.isInteger(homePenalties) &&
+                        Number.isInteger(awayPenalties) &&
+                        homePenalties >= 0 &&
+                        awayPenalties >= 0 &&
+                        homePenalties !== awayPenalties;
+
+                    if (!hasDecisivePenalties) {
+                        alert(
+                            "A drawn final requires a decisive penalty shootout result.",
+                        );
+                        return;
+                    }
+
+                    champion =
+                        homePenalties > awayPenalties
+                            ? finalMatch.homeTeam
+                            : finalMatch.awayTeam;
                 }
 
                 alert(champion + " wins the competition! 🏆");
 
+                archiveCurrentPhase();
+                uefaStorage.setFixturesImmediate(
+                    fixtures as Round[],
+                    competition,
+                    getUefaRosterVersion(competition),
+                );
                 currentUEFAPhase = "finished";
                 uefaStorage.setPhase(competition, "finished");
+
+                recalcTable();
+                renderAllFixtures();
 
                 return;
             }
@@ -383,6 +464,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                 return;
         }
 
+        archiveCurrentPhase();
         currentUEFAPhase = nextPhase;
         // Ensure final is a Round array for consistency
         let finalFixtures: Round[];
@@ -423,6 +505,8 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         uefaStorage.clearAll(competition);
 
         currentUEFAPhase = "league";
+        history = [];
+        viewedHistoryPhase = null;
         fixtures = generateUEFAFixtures(
             shuffleArray(teams),
             currentUEFAPhase,
@@ -449,6 +533,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
     }
 
     function reset(): void {
+        viewedHistoryPhase = null;
         fixtures = (fixtures as Round[]).map(function (round: Round) {
             return {
                 matches: round.matches.map(function (match: Match) {
@@ -483,6 +568,8 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         table = {};
         fixtures = [];
         teams = [];
+        history = [];
+        viewedHistoryPhase = null;
     }
 
     return { init, save, reset, regenerate, destroy };

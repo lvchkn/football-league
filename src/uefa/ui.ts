@@ -1,7 +1,7 @@
 import type { Match, MatchUpdate } from "../interfaces/match.js";
 import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
-import type { Phase } from "../interfaces/tournament.js";
+import type { Phase, UEFAHistoryEntry } from "../interfaces/tournament.js";
 import { sortUEFATable } from "./table.js";
 
 /**
@@ -94,6 +94,136 @@ function _parseGoals(
     return { homeGoals: hg, awayGoals: ag };
 }
 
+function _hasCompletedScore(match: Match): boolean {
+    return match.homeGoals !== null && match.awayGoals !== null;
+}
+
+function _hasDecisivePenalties(match: Match): boolean {
+    return (
+        typeof match.homePenalties === "number" &&
+        typeof match.awayPenalties === "number" &&
+        Number.isInteger(match.homePenalties) &&
+        Number.isInteger(match.awayPenalties) &&
+        match.homePenalties >= 0 &&
+        match.awayPenalties >= 0 &&
+        match.homePenalties !== match.awayPenalties
+    );
+}
+
+function _isAggregateDraw(leg1: Match, leg2: Match): boolean {
+    return (
+        _hasCompletedScore(leg1) &&
+        _hasCompletedScore(leg2) &&
+        leg1.homeGoals! + leg2.awayGoals! ===
+            leg1.awayGoals! + leg2.homeGoals!
+    );
+}
+
+function _renderPenaltyShootout(
+    container: HTMLElement,
+    match: Match,
+    idPrefix: string,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
+    readOnly: boolean,
+): void {
+    const penaltyDiv = document.createElement("div");
+    penaltyDiv.className = "penalty-shootout";
+
+    const heading = document.createElement("strong");
+    heading.textContent = "Penalty shootout: ";
+    penaltyDiv.appendChild(heading);
+
+    if (readOnly) {
+        const result = document.createElement("span");
+        if (_hasDecisivePenalties(match)) {
+            const winner =
+                match.homePenalties! > match.awayPenalties!
+                    ? match.homeTeam
+                    : match.awayTeam;
+            result.textContent =
+                match.homeTeam +
+                " " +
+                match.homePenalties +
+                " - " +
+                match.awayPenalties +
+                " " +
+                match.awayTeam +
+                " — " +
+                winner +
+                " wins";
+        } else {
+            result.textContent = "TBD";
+        }
+        penaltyDiv.appendChild(result);
+        container.appendChild(penaltyDiv);
+        return;
+    }
+
+    const homeLabel = document.createElement("label");
+    homeLabel.htmlFor = idPrefix + "_home_penalties";
+    homeLabel.textContent = match.homeTeam;
+
+    const homeInput = document.createElement("input");
+    homeInput.type = "number";
+    homeInput.id = idPrefix + "_home_penalties";
+    homeInput.min = "0";
+    homeInput.style.width = "48px";
+    homeInput.value =
+        match.homePenalties != null ? String(match.homePenalties) : "";
+
+    const awayLabel = document.createElement("label");
+    awayLabel.htmlFor = idPrefix + "_away_penalties";
+    awayLabel.textContent = match.awayTeam;
+
+    const awayInput = document.createElement("input");
+    awayInput.type = "number";
+    awayInput.id = idPrefix + "_away_penalties";
+    awayInput.min = "0";
+    awayInput.style.width = "48px";
+    awayInput.value =
+        match.awayPenalties != null ? String(match.awayPenalties) : "";
+
+    const applyButton = document.createElement("button");
+    applyButton.type = "button";
+    applyButton.textContent = "Apply penalties";
+
+    const validation = document.createElement("span");
+    validation.className = "penalty-validation";
+    validation.setAttribute("role", "alert");
+
+    applyButton.addEventListener("click", function () {
+        const parsed = _parseGoals(homeInput.value, awayInput.value);
+        if (!parsed) {
+            validation.textContent = "Enter valid penalty scores.";
+            return;
+        }
+        if (parsed.homeGoals === parsed.awayGoals) {
+            validation.textContent = "Penalty scores must produce a winner.";
+            return;
+        }
+
+        const oldMatch: Match = { ...match };
+        match.homePenalties = parsed.homeGoals;
+        match.awayPenalties = parsed.awayGoals;
+        onResultsApplied([{ match, oldMatch }]);
+    });
+
+    penaltyDiv.append(
+        homeLabel,
+        " ",
+        homeInput,
+        " - ",
+        awayInput,
+        " ",
+        awayLabel,
+        " ",
+        applyButton,
+        " ",
+        validation,
+    );
+    container.appendChild(penaltyDiv);
+}
+
 /**
  * Render UEFA fixtures for the current phase.
  * During knockout phases it also shows aggregate scores per tie.
@@ -102,6 +232,7 @@ export function renderUEFAFixtures(
     fixtures: Round[],
     onResultsApplied: (updates: MatchUpdate[]) => void,
     phase: Phase,
+    readOnly = false,
 ) {
     phase = phase || "league";
     const container: HTMLElement | null = document.getElementById("fixtures");
@@ -112,7 +243,9 @@ export function renderUEFAFixtures(
     const banner: HTMLDivElement = document.createElement("div");
     banner.className = "phase-indicator";
     const strong = document.createElement("strong");
-    strong.textContent = "Current Phase: " + (PHASE_LABELS[phase] || phase);
+    strong.textContent =
+        (readOnly ? "Viewing completed phase: " : "Current Phase: ") +
+        (PHASE_LABELS[phase] || phase);
     banner.appendChild(strong);
     container.appendChild(banner);
 
@@ -150,6 +283,7 @@ export function renderUEFAFixtures(
                 round as KnockoutRound,
                 i,
                 wrappedOnResultsApplied,
+                readOnly,
             );
         } else {
             _renderLeagueRound(
@@ -157,49 +291,72 @@ export function renderUEFAFixtures(
                 round as LeagueRound,
                 i,
                 wrappedOnResultsApplied,
+                readOnly,
             );
         }
 
-        const applyAllResultsButton: HTMLButtonElement =
-            document.createElement("button");
+        if (
+            (phase === "final" || phase === "finished") &&
+            round.matches[0] &&
+            _hasCompletedScore(round.matches[0]) &&
+            round.matches[0].homeGoals === round.matches[0].awayGoals
+        ) {
+            _renderPenaltyShootout(
+                div,
+                round.matches[0],
+                "r" + i + "_final",
+                wrappedOnResultsApplied,
+                readOnly,
+            );
+        }
 
-        applyAllResultsButton.className = "apply-all-btn";
-        applyAllResultsButton.textContent = "Apply all results";
+        if (!readOnly) {
+            const applyAllResultsButton: HTMLButtonElement =
+                document.createElement("button");
 
-        applyAllResultsButton.addEventListener("click", function () {
-            const updates: MatchUpdate[] = [];
-            round.matches.forEach(function (match: Match, idx: number) {
-                const id: string = "r" + i + "_m" + idx;
+            applyAllResultsButton.className = "apply-all-btn";
+            applyAllResultsButton.textContent = "Apply all results";
 
-                const hgEl: HTMLInputElement | null = div.querySelector(
-                    "#" + id + "_hg",
-                );
-                const agEl: HTMLInputElement | null = div.querySelector(
-                    "#" + id + "_ag",
-                );
+            applyAllResultsButton.addEventListener("click", function () {
+                const updates: MatchUpdate[] = [];
+                round.matches.forEach(function (match: Match, idx: number) {
+                    const id: string = "r" + i + "_m" + idx;
 
-                if (!hgEl || !agEl || hgEl.value === "" || agEl.value === "") {
-                    return;
-                }
+                    const hgEl: HTMLInputElement | null = div.querySelector(
+                        "#" + id + "_hg",
+                    );
+                    const agEl: HTMLInputElement | null = div.querySelector(
+                        "#" + id + "_ag",
+                    );
 
-                const parsedInput = _parseGoals(hgEl.value, agEl.value);
+                    if (
+                        !hgEl ||
+                        !agEl ||
+                        hgEl.value === "" ||
+                        agEl.value === ""
+                    ) {
+                        return;
+                    }
 
-                if (!parsedInput) return;
+                    const parsedInput = _parseGoals(hgEl.value, agEl.value);
 
-                const oldMatch: Match = { ...match };
+                    if (!parsedInput) return;
 
-                match.homeGoals = parsedInput.homeGoals;
-                match.awayGoals = parsedInput.awayGoals;
+                    const oldMatch: Match = { ...match };
 
-                updates.push({ match, oldMatch });
+                    match.homeGoals = parsedInput.homeGoals;
+                    match.awayGoals = parsedInput.awayGoals;
+
+                    updates.push({ match, oldMatch });
+                });
+
+                if (updates.length === 0) return;
+
+                wrappedOnResultsApplied(updates);
             });
 
-            if (updates.length === 0) return;
-
-            wrappedOnResultsApplied(updates);
-        });
-
-        div.appendChild(applyAllResultsButton);
+            div.appendChild(applyAllResultsButton);
+        }
 
         container.appendChild(div);
     });
@@ -213,6 +370,7 @@ function _renderLeagueRound(
     round: LeagueRound,
     roundIdx: number,
     onResultsApplied: (updates: MatchUpdate[]) => void,
+    readOnly: boolean,
 ): void {
     round.matches.forEach(function (match: Match, idx: number) {
         const matchRow: HTMLDivElement = _createMatchRow(
@@ -221,6 +379,7 @@ function _renderLeagueRound(
             idx,
             onResultsApplied,
             null,
+            readOnly,
         );
 
         container.appendChild(matchRow);
@@ -235,6 +394,7 @@ function _renderKnockoutRound(
     round: KnockoutRound,
     roundIdx: number,
     onResultsApplied: (updates: MatchUpdate[]) => void,
+    readOnly: boolean,
 ): void {
     for (let i = 0; i < round.matches.length; i += 2) {
         const leg1: Match = round.matches[i];
@@ -254,11 +414,25 @@ function _renderKnockoutRound(
         tieDiv.appendChild(header);
 
         tieDiv.appendChild(
-            _createMatchRow(leg1, roundIdx, i, onResultsApplied, "Leg 1"),
+            _createMatchRow(
+                leg1,
+                roundIdx,
+                i,
+                onResultsApplied,
+                "Leg 1",
+                readOnly,
+            ),
         );
 
         tieDiv.appendChild(
-            _createMatchRow(leg2, roundIdx, i + 1, onResultsApplied, "Leg 2"),
+            _createMatchRow(
+                leg2,
+                roundIdx,
+                i + 1,
+                onResultsApplied,
+                "Leg 2",
+                readOnly,
+            ),
         );
 
         const aggregateDiv: HTMLDivElement = document.createElement("div");
@@ -267,6 +441,16 @@ function _renderKnockoutRound(
         aggregateDiv.style.fontStyle = "italic";
         _updateAggregate(aggregateDiv, leg1, leg2);
         tieDiv.appendChild(aggregateDiv);
+
+        if (_isAggregateDraw(leg1, leg2)) {
+            _renderPenaltyShootout(
+                tieDiv,
+                leg2,
+                "r" + roundIdx + "_tie" + i / 2,
+                onResultsApplied,
+                readOnly,
+            );
+        }
 
         container.appendChild(tieDiv);
     }
@@ -281,6 +465,7 @@ function _createMatchRow(
     matchIdx: number,
     onResultsApplied: (updates: MatchUpdate[]) => void,
     label: string | null,
+    readOnly: boolean,
 ): HTMLDivElement {
     const line: HTMLDivElement = document.createElement("div");
     line.className = "match";
@@ -290,6 +475,23 @@ function _createMatchRow(
 
     const homeSpan = document.createElement("span");
     homeSpan.textContent = match.homeTeam;
+
+    const awaySpan = document.createElement("span");
+    awaySpan.textContent = match.awayTeam;
+
+    const labelSpan = document.createElement("span");
+    labelSpan.textContent = labelText;
+
+    if (readOnly) {
+        const score = document.createElement("strong");
+        score.className = "match-score";
+        score.textContent =
+            match.homeGoals !== null && match.awayGoals !== null
+                ? match.homeGoals + " - " + match.awayGoals
+                : "TBD";
+        line.append(homeSpan, " ", score, " ", awaySpan, labelSpan);
+        return line;
+    }
 
     const homeInput = document.createElement("input");
     homeInput.type = "number";
@@ -306,12 +508,6 @@ function _createMatchRow(
     awayInput.min = "0";
     awayInput.style.width = "40px";
     awayInput.value = match.awayGoals != null ? String(match.awayGoals) : "";
-
-    const awaySpan = document.createElement("span");
-    awaySpan.textContent = match.awayTeam;
-
-    const labelSpan = document.createElement("span");
-    labelSpan.textContent = labelText;
 
     const applyBtn = document.createElement("button");
     applyBtn.id = id + "_btn";
@@ -364,6 +560,66 @@ function _createMatchRow(
 }
 
 /**
+ * Render a selector for completed phases without making historic results live.
+ */
+export function renderUEFAHistoryControls(
+    history: UEFAHistoryEntry[],
+    currentPhase: Phase,
+    viewedHistoryPhase: Phase | null,
+    onHistorySelect: (phase: Phase) => void,
+    onReturnToCurrent: () => void,
+): void {
+    if (history.length === 0) return;
+
+    const container: HTMLElement | null = document.getElementById("fixtures");
+    if (!container) return;
+
+    const controls = document.createElement("div");
+    controls.className = "phase-history-controls";
+
+    const label = document.createElement("label");
+    label.htmlFor = "phase-history-selector";
+    label.textContent = "View completed stage:";
+
+    const selector = document.createElement("select");
+    selector.id = "phase-history-selector";
+
+    const currentOption = document.createElement("option");
+    currentOption.value = "current";
+    currentOption.textContent =
+        "Current: " + (PHASE_LABELS[currentPhase] || currentPhase);
+    selector.appendChild(currentOption);
+
+    history.forEach(function (entry) {
+        const option = document.createElement("option");
+        option.value = entry.phase;
+        option.textContent = PHASE_LABELS[entry.phase] || entry.phase;
+        selector.appendChild(option);
+    });
+
+    selector.value = viewedHistoryPhase || "current";
+    selector.addEventListener("change", function () {
+        if (selector.value === "current") {
+            onReturnToCurrent();
+            return;
+        }
+        onHistorySelect(selector.value as Phase);
+    });
+
+    controls.append(label, selector);
+
+    if (viewedHistoryPhase) {
+        const returnButton = document.createElement("button");
+        returnButton.type = "button";
+        returnButton.textContent = "Return to current stage";
+        returnButton.addEventListener("click", onReturnToCurrent);
+        controls.appendChild(returnButton);
+    }
+
+    container.prepend(controls);
+}
+
+/**
  * Update an aggregate-display element with computed totals.
  */
 function _updateAggregate(
@@ -371,8 +627,8 @@ function _updateAggregate(
     leg1: Match,
     leg2: Match,
 ): void {
-    const l1Complete = leg1.homeGoals !== null && leg1.awayGoals !== null;
-    const l2Complete = leg2.homeGoals !== null && leg2.awayGoals !== null;
+    const l1Complete = _hasCompletedScore(leg1);
+    const l2Complete = _hasCompletedScore(leg2);
 
     if (!l1Complete && !l2Complete) {
         element.textContent = "Aggregate: TBD";
@@ -403,8 +659,17 @@ function _updateAggregate(
         } else if (aggregate2 > aggregate1) {
             element.textContent += " -> " + leg1.awayTeam + " advances";
         } else {
-            element.textContent +=
-                " -> " + leg1.homeTeam + " advances (higher seed)";
+            if (_hasDecisivePenalties(leg2)) {
+                const winner =
+                    leg2.homePenalties! > leg2.awayPenalties!
+                        ? leg2.homeTeam
+                        : leg2.awayTeam;
+                element.textContent +=
+                    " -> " + winner + " advances on penalties (" +
+                    leg2.homePenalties + " - " + leg2.awayPenalties + ")";
+            } else {
+                element.textContent += " -> Penalties required";
+            }
         }
     }
 }
