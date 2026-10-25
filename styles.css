@@ -178,6 +178,66 @@ table:not(#standings) tbody tr:hover {
     flex-wrap: wrap;
 }
 
+.match-score {
+    min-width: 42px;
+    text-align: center;
+}
+
+.penalty-shootout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.penalty-validation {
+    color: #b91c1c;
+    font-size: 0.9rem;
+}
+
+.phase-history-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #eef6ff;
+}
+
+.phase-history-controls label {
+    font-weight: 600;
+}
+
+.phase-history-controls select {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 250px;
+    outline: none;
+}
+
+.phase-history-controls select:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.1);
+}
+
+.phase-history-controls select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 1024px) {
     body {
@@ -240,6 +300,10 @@ table:not(#standings) tbody tr:hover {
     .match button {
         font-size: 12px;
         padding: 4px 6px;
+    }
+
+    .phase-history-controls {
+        align-items: stretch;
     }
 }
 

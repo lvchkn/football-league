@@ -11,6 +11,7 @@ import type {
     Teams,
     UEFACompetition,
     UEFAContext,
+    UEFAHistoryEntry,
 } from "../interfaces/tournament.js";
 import { computeRosterVersion } from "../utils/roster-version.js";
 import { getUEFATeams } from "./teams.js";
@@ -21,6 +22,7 @@ const VERSION_KEY_PREFIX = "football-league:uefa:fixtures-version:";
 const PHASE_KEY_PREFIX = "football-league:uefa:phase:";
 const PHASE_CONTEXT_KEY_PREFIX = "football-league:uefa:phase-context:";
 const QUALIFIED_KEY_PREFIX = "football-league:uefa:qualified-teams:";
+const HISTORY_KEY_PREFIX = "football-league:uefa:history:";
 const DEBOUNCE_MS = 300;
 
 const pendingSaves = new Map<string, ReturnType<typeof setTimeout>>();
@@ -51,6 +53,9 @@ function _phaseContextKey(competition: UEFACompetition): string {
 }
 function _qualifiedKey(competition: UEFACompetition): string {
     return QUALIFIED_KEY_PREFIX + (competition || "ucl");
+}
+function _historyKey(competition: UEFACompetition): string {
+    return HISTORY_KEY_PREFIX + (competition || "ucl");
 }
 
 function _extractMinimal(fixtures: Round[]): Match[][] {
@@ -106,6 +111,7 @@ function _clearPersistedFixtures(competition: UEFACompetition): void {
         localStorage.removeItem(_phaseKey(competition));
         localStorage.removeItem(_phaseContextKey(competition));
         localStorage.removeItem(_qualifiedKey(competition));
+        localStorage.removeItem(_historyKey(competition));
     } catch {
         return;
     }
@@ -325,6 +331,61 @@ export function setQualifiedTeams(
         localStorage.setItem(_qualifiedKey(competition), JSON.stringify(teams));
         return true;
     } catch (e) {
+        return false;
+    }
+}
+
+function _cloneFixtures(fixtures: Round[]): Round[] {
+    return fixtures.map(function (round: Round) {
+        return {
+            matches: round.matches.map(function (match: Match) {
+                return { ...match };
+            }),
+        };
+    });
+}
+
+export function getHistory(
+    competition: UEFACompetition,
+    rosterVersion?: string | null,
+): UEFAHistoryEntry[] {
+    const expectedVersion = _getExpectedVersion(competition, rosterVersion);
+
+    if (
+        expectedVersion &&
+        !_isPersistedDataValid(competition, expectedVersion)
+    ) {
+        _clearPersistedFixtures(competition);
+        return [];
+    }
+
+    try {
+        const raw = localStorage.getItem(_historyKey(competition));
+        const history = raw ? JSON.parse(raw) : [];
+        return Array.isArray(history) ? history : [];
+    } catch {
+        return [];
+    }
+}
+
+export function archivePhase(
+    competition: UEFACompetition,
+    phase: Phase,
+    fixtures: Round[],
+    rosterVersion?: string | null,
+): boolean {
+    try {
+        const history = getHistory(competition, rosterVersion).filter(
+            (entry) => entry.phase !== phase,
+        );
+        history.push({ phase, fixtures: _cloneFixtures(fixtures) });
+        localStorage.setItem(_historyKey(competition), JSON.stringify(history));
+        _writeVersion(
+            competition,
+            _getExpectedVersion(competition, rosterVersion),
+        );
+        return true;
+    } catch {
         return false;
     }
 }

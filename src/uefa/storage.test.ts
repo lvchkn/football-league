@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+    archivePhase,
     clearAll,
     getFixtures,
     getFixturesStructure,
+    getHistory,
     setFixturesImmediate,
     setFixturesStructure,
     setPhase,
@@ -87,6 +89,38 @@ describe("UEFA fixture storage", () => {
         ]);
     });
 
+    it("persists penalty shootout scores with fixture results", () => {
+        const penaltyFixtures: Round[] = [
+            {
+                matches: [
+                    {
+                        homeTeam: "A",
+                        awayTeam: "B",
+                        homeGoals: 1,
+                        awayGoals: 1,
+                        homePenalties: 5,
+                        awayPenalties: 4,
+                    },
+                ],
+            },
+        ];
+
+        setFixturesImmediate(penaltyFixtures, competition, "version-1");
+
+        expect(getFixtures(competition, "version-1")).toEqual([
+            [
+                {
+                    homeTeam: "A",
+                    awayTeam: "B",
+                    homeGoals: 1,
+                    awayGoals: 1,
+                    homePenalties: 5,
+                    awayPenalties: 4,
+                },
+            ],
+        ]);
+    });
+
     it("invalidates persisted fixtures when the roster version changes", () => {
         setFixturesStructure(fixtures, competition, "version-1");
         setFixturesImmediate(fixtures, competition, "version-1");
@@ -131,5 +165,73 @@ describe("UEFA fixture storage", () => {
         expect(
             memoryStorage.getItem("football-league:uefa:qualified-teams:ucl"),
         ).toBeNull();
+    });
+
+    it("archives completed phases as independent read-only snapshots", () => {
+        const completedFixtures: Round[] = [
+            {
+                matches: [
+                    {
+                        homeTeam: "A",
+                        awayTeam: "B",
+                        homeGoals: 1,
+                        awayGoals: 1,
+                        homePenalties: 5,
+                        awayPenalties: 4,
+                    },
+                ],
+            },
+        ];
+
+        expect(
+            archivePhase(
+                competition,
+                "league",
+                completedFixtures,
+                "version-1",
+            ),
+        ).toBe(true);
+        completedFixtures[0].matches[0].homeGoals = 5;
+
+        expect(getHistory(competition, "version-1")).toEqual([
+            {
+                phase: "league",
+                fixtures: [
+                    {
+                        matches: [
+                            {
+                                homeTeam: "A",
+                                awayTeam: "B",
+                                homeGoals: 1,
+                                awayGoals: 1,
+                                homePenalties: 5,
+                                awayPenalties: 4,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ]);
+    });
+
+    it("clears archived phase history when the roster version changes", () => {
+        archivePhase(competition, "league", fixtures, "version-1");
+        memoryStorage.setItem(
+            "football-league:uefa:fixtures-version:ucl",
+            "stale-version",
+        );
+
+        expect(getHistory(competition, "version-2")).toEqual([]);
+        expect(
+            memoryStorage.getItem("football-league:uefa:history:ucl"),
+        ).toBeNull();
+    });
+
+    it("clears archived phase history with all UEFA progress", () => {
+        archivePhase(competition, "league", fixtures, "version-1");
+
+        clearAll(competition);
+
+        expect(getHistory(competition, "version-1")).toEqual([]);
     });
 });

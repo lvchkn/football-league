@@ -11,6 +11,9 @@ export interface MatchResult {
 export interface Match extends Pairing {
     homeGoals: number | null;
     awayGoals: number | null;
+    /** Shootout scores, present only when a drawn knockout match goes to penalties. */
+    homePenalties?: number | null;
+    awayPenalties?: number | null;
 }
 
 export interface LeagueMatch extends Match {

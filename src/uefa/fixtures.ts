@@ -134,8 +134,7 @@ export function generateFinalFixture(teamA: string, teamB: string): Match {
 
 /**
  * Determine the winner of a completed two-leg tie.
- * If the aggregate is level, the higher-seeded team (Leg 1 home) advances
- * (in real life this would go to extra time and penalties in Leg 2).
+ * A level aggregate requires a decisive penalty shootout in Leg 2.
  */
 export function getTieWinner(leg1: Match, leg2: Match): string | null {
     if (
@@ -156,8 +155,24 @@ export function getTieWinner(leg1: Match, leg2: Match): string | null {
     if (aggregate1 > aggregate2) return team1;
     if (aggregate2 > aggregate1) return team2;
 
-    // Tied on aggregate — higher seed (leg 1 home) advances
-    return team1;
+    const leg2HomePenalties = leg2.homePenalties;
+    const leg2AwayPenalties = leg2.awayPenalties;
+
+    if (
+        typeof leg2HomePenalties !== "number" ||
+        typeof leg2AwayPenalties !== "number" ||
+        !Number.isInteger(leg2HomePenalties) ||
+        !Number.isInteger(leg2AwayPenalties) ||
+        leg2HomePenalties < 0 ||
+        leg2AwayPenalties < 0 ||
+        leg2HomePenalties === leg2AwayPenalties
+    ) {
+        return null;
+    }
+
+    return leg2HomePenalties > leg2AwayPenalties
+        ? leg2.homeTeam
+        : leg2.awayTeam;
 }
 
 /**

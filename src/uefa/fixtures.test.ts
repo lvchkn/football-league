@@ -81,7 +81,7 @@ describe("UEFA Tournament Progressions", () => {
             expect(getTieWinner(leg1_reverse, leg2_reverse)).toBe("B");
         });
 
-        it("should advance Leg 1 home team (higher seed) if aggregate is tied", () => {
+        it("should require penalties if aggregate is tied", () => {
             const leg1: Match = {
                 homeTeam: "A",
                 awayTeam: "B",
@@ -95,8 +95,32 @@ describe("UEFA Tournament Progressions", () => {
                 awayGoals: 1,
             };
 
-            // Aggregate 2-2. A is leg 1 home team.
-            expect(getTieWinner(leg1, leg2)).toBe("A");
+            // Aggregate 2-2 cannot be resolved without a shootout.
+            expect(getTieWinner(leg1, leg2)).toBeNull();
+
+            // Leg 2 is B vs A, so B wins this shootout 5-4.
+            leg2.homePenalties = 5;
+            leg2.awayPenalties = 4;
+            expect(getTieWinner(leg1, leg2)).toBe("B");
+        });
+
+        it("should reject a tied penalty shootout", () => {
+            const leg1: Match = {
+                homeTeam: "A",
+                awayTeam: "B",
+                homeGoals: 1,
+                awayGoals: 1,
+            };
+            const leg2: Match = {
+                homeTeam: "B",
+                awayTeam: "A",
+                homeGoals: 1,
+                awayGoals: 1,
+                homePenalties: 4,
+                awayPenalties: 4,
+            };
+
+            expect(getTieWinner(leg1, leg2)).toBeNull();
         });
 
         it("should return getKnockoutWinners for an entire round", () => {
