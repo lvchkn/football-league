@@ -8,6 +8,21 @@ import { createDomesticApp } from "./domestic/app.js";
 import { createTournamentApp } from "./tournament/app.js";
 import { COMPETITIONS, isCompetition, isTournament } from "./competitions.js";
 import {
+    careerSeasonInputs,
+    domesticContext,
+    isCareerCompetition,
+    tournamentContext,
+} from "./context.js";
+import { getMode, setMode, type Mode } from "./mode.js";
+import { clearCareerFixtures, loadCareer, resetCareer, saveCareer, seasonLabel } from "./career/state.js";
+import { endSeason } from "./career/season.js";
+import {
+    openCareerHistory,
+    openSeasonSummary,
+    renderCareerBar,
+    setupModeSwitch,
+} from "./career/ui.js";
+import {
     subscribeToLeagueChange,
     updateLeagueSelector,
     setupScrollToTopButton,
@@ -22,34 +37,85 @@ let activeApp: CompetitionApp;
  * Create the appropriate competition app for the given league.
  */
 function createApp(league: LeagueList | TournamentKey): CompetitionApp {
-    let app: CompetitionApp;
-
-    if (isTournament(league)) {
-        app = createTournamentApp(league as TournamentKey);
-        app.init();
-        return app;
-    }
-
-    app = createDomesticApp(league as LeagueList);
+    const app = isTournament(league)
+        ? createTournamentApp(tournamentContext(league))
+        : createDomesticApp(domesticContext(league));
     app.init();
     return app;
+}
+
+/** Competitions offered in the current mode, in dropdown order. */
+function availableCompetitions() {
+    return getMode() === "career"
+        ? COMPETITIONS.filter(([id]) => isCareerCompetition(id))
+        : COMPETITIONS;
+}
+
+/**
+ * Rebuild the dropdown, mode switch and career bar, then (re)start the app
+ * for the selected competition, falling back to the first one on offer.
+ */
+function refresh(): void {
+    const mode = getMode();
+    const competitions = availableCompetitions();
+    populateLeagueSelector(competitions);
+    if (!competitions.some(([id]) => id === selectedLeague)) {
+        selectedLeague = competitions[0]![0];
+    }
+    updateLeagueSelector(selectedLeague);
+
+    setupModeSwitch(mode, function (next) {
+        activeApp?.save();
+        activeApp?.destroy();
+        setMode(next as Mode);
+        refresh();
+    });
+
+    renderCareerBar(mode === "career" ? loadCareer() : null, {
+        onEndSeason: endCareerSeason,
+        onShowHistory: () => openCareerHistory(loadCareer().history),
+        onReset: function () {
+            if (!confirm("Reset the career? Every season so far will be lost.")) return;
+            activeApp?.destroy();
+            resetCareer();
+            refresh();
+        },
+    });
+
+    activeApp = createApp(selectedLeague);
+}
+
+function endCareerSeason(): void {
+    const state = loadCareer();
+    if (
+        !confirm(
+            `End the ${seasonLabel(state.season)} season? ` +
+                "Unplayed domestic matches will be simulated, and European competitions " +
+                "will restart with next season's qualifiers.",
+        )
+    ) {
+        return;
+    }
+
+    activeApp?.save();
+    activeApp?.destroy();
+    const { next, summary } = endSeason(state, careerSeasonInputs(state));
+    saveCareer(next);
+    clearCareerFixtures();
+    refresh();
+    openSeasonSummary(summary);
 }
 
 /**
  * Start the application.
  */
 function start(): void {
-    const persisted: LeagueList | TournamentKey | null =
-        storage.getSelectedLeague();
-
-    populateLeagueSelector(COMPETITIONS);
-
+    const persisted = storage.getSelectedLeague();
     if (persisted && isCompetition(persisted)) {
         selectedLeague = persisted;
     }
-    updateLeagueSelector(selectedLeague);
 
-    activeApp = createApp(selectedLeague);
+    refresh();
 
     // League-change subscription
     subscribeToLeagueChange(function (league) {

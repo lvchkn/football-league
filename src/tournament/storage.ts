@@ -15,21 +15,122 @@ import type {
 import { createFixtureStore } from "../fixture-store.js";
 import { getRosterVersion } from "../competitions.js";
 
-const store = createFixtureStore({
-    // Key prefix predates national-team support; kept so existing saves still load.
-    prefix: "football-league:uefa:",
-    defaultId: "ucl",
-    expectedVersion: (competition) =>
-        getRosterVersion(competition as TournamentKey),
-    serializeResult: (match) => match,
-    serializeStructure: (match) => ({
-        homeTeam: match.homeTeam,
-        awayTeam: match.awayTeam,
-        leg: (match as KnockoutMatch).leg ?? null,
-        tieIndex: (match as KnockoutMatch).tieIndex ?? null,
-    }),
-    extraKeys: ["phase", "phase-context", "qualified-teams", "history", "groups"],
-});
+function _cloneFixtures(fixtures: Round[]): Round[] {
+    return fixtures.map((round) => ({
+        matches: round.matches.map((match: Match) => ({ ...match })),
+    }));
+}
+
+export function createTournamentStorage(
+    prefix: string,
+    expectedVersion: (competition: string) => string | null,
+) {
+    const store = createFixtureStore({
+        prefix,
+        defaultId: "ucl",
+        expectedVersion,
+        serializeResult: (match) => match,
+        serializeStructure: (match) => ({
+            homeTeam: match.homeTeam,
+            awayTeam: match.awayTeam,
+            leg: (match as KnockoutMatch).leg ?? null,
+            tieIndex: (match as KnockoutMatch).tieIndex ?? null,
+        }),
+        extraKeys: ["phase", "phase-context", "qualified-teams", "history", "groups"],
+    });
+
+    function getHistory(
+        competition: TournamentKey,
+        rosterVersion?: string | null,
+    ): StageHistoryEntry[] {
+        if (!store.checkVersion(competition, rosterVersion)) return [];
+        const history = store.readJson("history", competition);
+        return Array.isArray(history) ? history : [];
+    }
+
+    return {
+        cancelPendingSave: store.cancelPendingSave,
+        getFixtures: store.getFixtures,
+        setFixturesDebounced: store.setFixturesDebounced,
+        setFixturesImmediate: store.setFixturesImmediate,
+        getFixturesStructure: store.getFixturesStructure,
+        setFixturesStructure: store.setFixturesStructure,
+        clearAll: store.clearAll,
+
+        getPhase(competition: TournamentKey): Phase {
+            try {
+                return (localStorage.getItem(store.key("phase", competition)) as Phase) || "league";
+            } catch {
+                return "league";
+            }
+        },
+
+        setPhase(competition: TournamentKey, phase: Phase): boolean {
+            try {
+                localStorage.setItem(store.key("phase", competition), phase);
+                return true;
+            } catch {
+                return false;
+            }
+        },
+
+        getPhaseContext(competition: TournamentKey): StageContext | null {
+            return store.readJson("phase-context", competition);
+        },
+
+        setPhaseContext(competition: TournamentKey, context: StageContext): boolean {
+            return store.writeJson("phase-context", competition, context);
+        },
+
+        getQualifiedTeams(competition: TournamentKey): string[] | null {
+            return store.readJson("qualified-teams", competition);
+        },
+
+        setQualifiedTeams(competition: TournamentKey, teams: Teams): boolean {
+            return store.writeJson("qualified-teams", competition, teams);
+        },
+
+        getHistory,
+
+        /**
+         * Keep a read-only copy of a completed phase, replacing any earlier copy.
+         */
+        archivePhase(
+            competition: TournamentKey,
+            phase: Phase,
+            fixtures: Round[],
+            rosterVersion?: string | null,
+        ): boolean {
+            const history = getHistory(competition, rosterVersion).filter(
+                (entry) => entry.phase !== phase,
+            );
+            history.push({ phase, fixtures: _cloneFixtures(fixtures) });
+            if (!store.writeJson("history", competition, history)) return false;
+            store.writeVersion(competition, rosterVersion);
+            return true;
+        },
+
+        /**
+         * The group draw in use, when it differs from the format's default draw.
+         * Returned unvalidated; callers check it against the format.
+         */
+        getGroups(competition: TournamentKey): unknown {
+            return store.readJson("groups", competition);
+        },
+
+        setGroups(competition: TournamentKey, groups: Record<string, Teams>): boolean {
+            return store.writeJson("groups", competition, groups);
+        },
+    };
+}
+
+export type TournamentStorage = ReturnType<typeof createTournamentStorage>;
+
+/** Classic-mode storage. The prefix predates national-team support; kept so existing saves still load. */
+export const classicTournamentStorage = createTournamentStorage(
+    "football-league:uefa:",
+    (competition) => getRosterVersion(competition as TournamentKey),
+);
 
 export const {
     cancelPendingSave,
@@ -39,82 +140,14 @@ export const {
     getFixturesStructure,
     setFixturesStructure,
     clearAll,
-} = store;
-
-export function getPhase(competition: TournamentKey): Phase {
-    try {
-        return (localStorage.getItem(store.key("phase", competition)) as Phase) || "league";
-    } catch {
-        return "league";
-    }
-}
-
-export function setPhase(competition: TournamentKey, phase: Phase): boolean {
-    try {
-        localStorage.setItem(store.key("phase", competition), phase);
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-export function getPhaseContext(competition: TournamentKey): StageContext | null {
-    return store.readJson("phase-context", competition);
-}
-
-export function setPhaseContext(competition: TournamentKey, context: StageContext): boolean {
-    return store.writeJson("phase-context", competition, context);
-}
-
-export function getQualifiedTeams(competition: TournamentKey): string[] | null {
-    return store.readJson("qualified-teams", competition);
-}
-
-export function setQualifiedTeams(competition: TournamentKey, teams: Teams): boolean {
-    return store.writeJson("qualified-teams", competition, teams);
-}
-
-function _cloneFixtures(fixtures: Round[]): Round[] {
-    return fixtures.map((round) => ({
-        matches: round.matches.map((match: Match) => ({ ...match })),
-    }));
-}
-
-export function getHistory(
-    competition: TournamentKey,
-    rosterVersion?: string | null,
-): StageHistoryEntry[] {
-    if (!store.checkVersion(competition, rosterVersion)) return [];
-    const history = store.readJson("history", competition);
-    return Array.isArray(history) ? history : [];
-}
-
-/**
- * Keep a read-only copy of a completed phase, replacing any earlier copy.
- */
-export function archivePhase(
-    competition: TournamentKey,
-    phase: Phase,
-    fixtures: Round[],
-    rosterVersion?: string | null,
-): boolean {
-    const history = getHistory(competition, rosterVersion).filter(
-        (entry) => entry.phase !== phase,
-    );
-    history.push({ phase, fixtures: _cloneFixtures(fixtures) });
-    if (!store.writeJson("history", competition, history)) return false;
-    store.writeVersion(competition, rosterVersion);
-    return true;
-}
-
-/**
- * The group draw in use, when it differs from the format's default draw.
- * Returned unvalidated; callers check it against the format.
- */
-export function getGroups(competition: TournamentKey): unknown {
-    return store.readJson("groups", competition);
-}
-
-export function setGroups(competition: TournamentKey, groups: Record<string, Teams>): boolean {
-    return store.writeJson("groups", competition, groups);
-}
+    getPhase,
+    setPhase,
+    getPhaseContext,
+    setPhaseContext,
+    getQualifiedTeams,
+    setQualifiedTeams,
+    getHistory,
+    archivePhase,
+    getGroups,
+    setGroups,
+} = classicTournamentStorage;
