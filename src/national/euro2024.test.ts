@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TableRow } from "../interfaces/table.js";
-import { generateStageFixtures, getNextStage } from "../tournament-format.js";
+import { generateStageFixtures, getNextStage } from "../tournament/format.js";
 import { countTies, getKnockoutWinners } from "../utils/knockout.js";
 import { computeGroupTables, pairAdjacent } from "../utils/groups.js";
 import { equalRatings, simulateKnockoutRound, simulateLeagueRounds, type Rng } from "../utils/simulation.js";

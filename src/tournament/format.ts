@@ -1,26 +1,13 @@
-import type { Round } from "./interfaces/round.js";
+import type { Round } from "../interfaces/round.js";
 import type {
     Phase,
     Stage,
     Teams,
     TournamentFormat,
-    UEFAContext,
-} from "./interfaces/tournament.js";
-import { generateKnockoutRound } from "./utils/knockout.js";
-import { generateGroupFixtures } from "./utils/groups.js";
-import { EURO_2024_FORMAT } from "./national/euro2024.js";
-import { WC_2026_FORMAT } from "./national/worldcup2026.js";
-import { UEFA_FORMAT } from "./uefa/format.js";
-
-/**
- * Format for a competition: a national-team tournament, or the
- * Swiss-model club cups.
- */
-export function getFormat(competition: string): TournamentFormat {
-    if (competition === "euro") return EURO_2024_FORMAT;
-    if (competition === "wc") return WC_2026_FORMAT;
-    return UEFA_FORMAT;
-}
+    StageContext,
+} from "../interfaces/tournament.js";
+import { generateKnockoutRound } from "../utils/knockout.js";
+import { generateGroupFixtures } from "../utils/groups.js";
 
 /**
  * The stage for a phase. "finished" resolves to the last stage, whose
@@ -48,7 +35,7 @@ export function getPhaseLabel(format: TournamentFormat, phase: Phase): string {
 export function generateStageFixtures(
     stage: Stage,
     teams: Teams,
-    context: UEFAContext,
+    context: StageContext,
 ): Round[] {
     if (stage.kind === "league") return stage.generate(teams);
     if (stage.kind === "groups") return generateGroupFixtures(stage.groups, stage.schedule);

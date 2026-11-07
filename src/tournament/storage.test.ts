@@ -12,9 +12,9 @@ import {
     setQualifiedTeams,
 } from "./storage.js";
 import type { Round } from "../interfaces/round.js";
-import type { UEFACompetition } from "../interfaces/tournament.js";
+import type { TournamentKey } from "../interfaces/tournament.js";
 
-const competition: UEFACompetition = "ucl";
+const competition: TournamentKey = "ucl";
 const fixtures: Round[] = [
     {
         matches: [
@@ -55,7 +55,7 @@ Object.defineProperty(globalThis, "localStorage", {
     configurable: true,
 });
 
-describe("UEFA fixture storage", () => {
+describe("Tournament fixture storage", () => {
     beforeEach(() => {
         memoryStorage.clear();
         clearAll(competition);
@@ -142,7 +142,7 @@ describe("UEFA fixture storage", () => {
         ).toBeNull();
     });
 
-    it("clears UEFA phase progress when fixtures are invalidated", () => {
+    it("clears tournament phase progress when fixtures are invalidated", () => {
         setFixturesStructure(fixtures, competition, "version-1");
         setFixturesImmediate(fixtures, competition, "version-1");
         setPhase(competition, "playoffs");
@@ -227,7 +227,7 @@ describe("UEFA fixture storage", () => {
         ).toBeNull();
     });
 
-    it("clears archived phase history with all UEFA progress", () => {
+    it("clears archived phase history with all tournament progress", () => {
         archivePhase(competition, "league", fixtures, "version-1");
 
         clearAll(competition);

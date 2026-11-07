@@ -34,7 +34,7 @@ export type LeagueList =
     | "turkish";
 
 /** Competitions run by the stage-based tournament app (club and national). */
-export type UEFACompetition = "ucl" | "el" | "cl" | "euro" | "wc";
+export type TournamentKey = "ucl" | "el" | "cl" | "euro" | "wc";
 
 export type Teams = string[];
 
@@ -44,7 +44,7 @@ export interface League {
     teams: Teams;
 }
 
-export interface UEFAContext {
+export interface StageContext {
     playoffTeams?: string[];
     top8?: string[];
     playoffWinners?: string[];
@@ -60,8 +60,18 @@ export interface LeagueStage {
     phase: Phase;
     label: string;
     generate(teams: Teams): LeaguePhase;
+    /** Highlighted table positions, best first; positions past the last zone are plain. */
+    zones?: StandingsZone[];
     /** Build the context for the next stage from the final standings (best first). */
-    advance(standings: Teams, context: UEFAContext): UEFAContext;
+    advance(standings: Teams, context: StageContext): StageContext;
+}
+
+/**
+ * Table positions 1..upTo (after the previous zone) share a highlight.
+ */
+export interface StandingsZone {
+    upTo: number;
+    status: "qualified" | "contention";
 }
 
 /**
@@ -72,9 +82,9 @@ export interface KnockoutStage {
     phase: Phase;
     label: string;
     legs: Legs;
-    pairings(context: UEFAContext): Pairing[];
+    pairings(context: StageContext): Pairing[];
     /** Build the context for the next stage; omitted on the last stage. */
-    advance?(winners: Teams, context: UEFAContext): UEFAContext;
+    advance?(winners: Teams, context: StageContext): StageContext;
 }
 
 /**
@@ -97,7 +107,7 @@ export interface GroupStage {
     /** Third-placed teams that go through, ranked across all groups. */
     qualifyingThirds: number;
     /** Build the next stage's context from the final group tables (best first). */
-    advance(tables: Record<string, TableRow[]>, context: UEFAContext): UEFAContext;
+    advance(tables: Record<string, TableRow[]>, context: StageContext): StageContext;
 }
 
 export type Stage = LeagueStage | GroupStage | KnockoutStage;
@@ -111,9 +121,9 @@ export interface TournamentFormat {
 }
 
 /**
- * A completed UEFA phase preserved for read-only result browsing.
+ * A completed tournament phase preserved for read-only result browsing.
  */
-export interface UEFAHistoryEntry {
+export interface StageHistoryEntry {
     phase: Phase;
     fixtures: Round[];
 }

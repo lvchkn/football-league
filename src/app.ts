@@ -1,36 +1,31 @@
 import type {
     LeagueList,
-    UEFACompetition,
+    TournamentKey,
     CompetitionApp,
 } from "./interfaces/tournament.js";
 import * as storage from "./storage.js";
 import { createDomesticApp } from "./domestic/app.js";
-import { createUEFAApp } from "./uefa/uefa.js";
+import { createTournamentApp } from "./tournament/app.js";
+import { COMPETITIONS, isCompetition, isTournament } from "./competitions.js";
 import {
     subscribeToLeagueChange,
     updateLeagueSelector,
     setupScrollToTopButton,
+    populateLeagueSelector,
 } from "./ui.js";
 
-export let selectedLeague: LeagueList | UEFACompetition = "english";
+export let selectedLeague: LeagueList | TournamentKey = "english";
 
 let activeApp: CompetitionApp;
 
 /**
- * Check if a league is a UEFA competition
- */
-function isUEFACompetition(league: string): boolean {
-    return ["ucl", "el", "cl", "euro", "wc"].includes(league);
-}
-
-/**
  * Create the appropriate competition app for the given league.
  */
-function createApp(league: LeagueList | UEFACompetition): CompetitionApp {
+function createApp(league: LeagueList | TournamentKey): CompetitionApp {
     let app: CompetitionApp;
 
-    if (isUEFACompetition(league)) {
-        app = createUEFAApp(league as UEFACompetition);
+    if (isTournament(league)) {
+        app = createTournamentApp(league as TournamentKey);
         app.init();
         return app;
     }
@@ -44,13 +39,15 @@ function createApp(league: LeagueList | UEFACompetition): CompetitionApp {
  * Start the application.
  */
 function start(): void {
-    const persisted: LeagueList | UEFACompetition | null =
+    const persisted: LeagueList | TournamentKey | null =
         storage.getSelectedLeague();
 
-    if (persisted) {
+    populateLeagueSelector(COMPETITIONS);
+
+    if (persisted && isCompetition(persisted)) {
         selectedLeague = persisted;
-        updateLeagueSelector(selectedLeague);
     }
+    updateLeagueSelector(selectedLeague);
 
     activeApp = createApp(selectedLeague);
 
@@ -60,8 +57,8 @@ function start(): void {
             activeApp.destroy();
         }
 
-        selectedLeague = league as LeagueList | UEFACompetition;
-        storage.setSelectedLeague(league as LeagueList | UEFACompetition);
+        selectedLeague = league as LeagueList | TournamentKey;
+        storage.setSelectedLeague(league as LeagueList | TournamentKey);
 
         // Re-show standings section when switching leagues (might have been hidden)
         const standingsSection: HTMLElement | null =

@@ -3,6 +3,11 @@ import type { H2HRecord, Table, TableRow } from "../interfaces/table.js";
 import type { Teams } from "../interfaces/tournament.js";
 
 /**
+ * Standings tracking shared by every competition: points, goals and
+ * head-to-head records, updated one result at a time (and undone the same way).
+ */
+
+/**
  * Initialize empty league table
  */
 export function initTable(teams: Teams): Table {
@@ -72,7 +77,7 @@ function _updateHeadToHead(
     direction: 1 | -1,
 ): void {
     const { homeTeam, awayTeam, homeGoals, awayGoals } = match;
-    if (homeGoals === null || awayGoals === null) return;
+    if (homeGoals == null || awayGoals == null) return;
 
     const homeRow = table[homeTeam];
     const awayRow = table[awayTeam];
@@ -100,7 +105,7 @@ function _updateHeadToHead(
 export function applyMatchResult(match: Match, table: Table): void {
     const { homeTeam, awayTeam, homeGoals, awayGoals } = match;
 
-    if (homeGoals === null || awayGoals === null) {
+    if (homeGoals == null || awayGoals == null) {
         return;
     }
 
@@ -142,7 +147,7 @@ export function applyMatchResult(match: Match, table: Table): void {
 export function removeMatchResult(match: Match, table: Table): void {
     const { homeTeam, awayTeam, homeGoals, awayGoals } = match;
 
-    if (homeGoals === null || awayGoals === null) {
+    if (homeGoals == null || awayGoals == null) {
         return;
     }
 
@@ -214,7 +219,8 @@ function _compareOverall(a: TableRow, b: TableRow): number {
 }
 
 /**
- * Get sorted table standings
+ * Sorted standings. Teams level on points are ranked by a mini-league of the
+ * matches between them, then overall goal difference and goals scored.
  */
 export function sortTable(table: Table): TableRow[] {
     const pointGroups = new Map<number, TableRow[]>();

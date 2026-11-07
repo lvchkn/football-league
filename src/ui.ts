@@ -67,6 +67,29 @@ export function subscribeToLeagueChange(
 }
 
 /**
+ * Fill the league dropdown, one section per competition group.
+ */
+export function populateLeagueSelector(
+    competitions: [string, { name: string; group: string }][],
+): void {
+    const selector = document.getElementById("league-selector");
+    if (!selector) return;
+
+    const groups = new Map<string, HTMLOptGroupElement>();
+    competitions.forEach(function ([id, { name, group }]) {
+        let optgroup = groups.get(group);
+        if (!optgroup) {
+            optgroup = document.createElement("optgroup");
+            optgroup.label = group;
+            groups.set(group, optgroup);
+        }
+        optgroup.appendChild(new Option(name, id));
+    });
+
+    selector.replaceChildren(...groups.values());
+}
+
+/**
  * Update the league selector dropdown to match the current selected league
  */
 export function updateLeagueSelector(league: string): void {

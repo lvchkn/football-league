@@ -2,7 +2,7 @@ import type { LeagueMatch } from "../interfaces/match.js";
 import type { Round } from "../interfaces/round.js";
 import type { TableRow } from "../interfaces/table.js";
 import type { Teams } from "../interfaces/tournament.js";
-import { applyMatchResult, initTable, sortTable } from "../domestic/table.js";
+import { applyMatchResult, initTable, sortTable } from "./table.js";
 import { shuffleArray } from "./shuffle.js";
 
 /**
