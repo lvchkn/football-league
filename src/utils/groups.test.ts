@@ -114,7 +114,7 @@ describe("drawGroups", () => {
         for (let seed = 1; seed <= 50; seed++) {
             let x = seed;
             const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
-            const groups = drawGroups(pots, letters, [], rng);
+            const groups = drawGroups(pots, letters, {}, rng);
 
             expect(Object.keys(groups)).toEqual(letters);
             Object.values(groups).forEach((teams) => {
@@ -129,7 +129,7 @@ describe("drawGroups", () => {
         for (let seed = 1; seed <= 50; seed++) {
             let x = seed;
             const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
-            const groups = drawGroups(pots, letters, [{ team: "P1b", group: "A", position: 0 }], rng);
+            const groups = drawGroups(pots, letters, { fixed: [{ team: "P1b", group: "A", position: 0 }] }, rng);
             expect(groups["A"]![0]).toBe("P1b");
         }
     });
@@ -151,5 +151,62 @@ describe("isValidDraw", () => {
         expect(isValidDraw({ A: ["a", "b", "c", "d"] }, ["A", "B"], teams)).toBe(false);
         expect(isValidDraw({ A: ["a", "b", "c"], B: ["d", "e", "f", "g", "h"] }, ["A", "B"], teams)).toBe(false);
         expect(isValidDraw(null, ["A", "B"], teams)).toBe(false);
+    });
+});
+
+describe("drawGroups with rules", () => {
+    const pots = [
+        ["red1", "blue1", "green1"],
+        ["red2", "blue2", "green2"],
+        ["red3", "blue3", "green3"],
+        ["red4", "blue4", "green4"],
+    ];
+    const colour = (team: string) => team.replace(/\d/, "");
+
+    it("never breaks a placement rule and backtracks out of dead ends", () => {
+        for (let seed = 1; seed <= 100; seed++) {
+            let x = seed;
+            const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
+            // At most two teams of one colour per group: forces backtracking
+            const groups = drawGroups(
+                pots,
+                ["A", "B", "C"],
+                {
+                    canPlace: (group, team) =>
+                        group.filter((t) => colour(t) === colour(team)).length < 2,
+                },
+                rng,
+            );
+            Object.values(groups).forEach((teams) => {
+                const counts = new Map<string, number>();
+                teams.forEach((t) => counts.set(colour(t), (counts.get(colour(t)) ?? 0) + 1));
+                expect(Math.max(...counts.values())).toBeLessThanOrEqual(2);
+            });
+        }
+    });
+
+    it("places teams by pot when positionOf is given", () => {
+        const groups = drawGroups(pots, ["A", "B", "C"], { positionOf: (_g, pot) => 3 - pot });
+        Object.values(groups).forEach((teams) => {
+            expect(teams.map((t) => Number(t.slice(-1)))).toEqual([4, 3, 2, 1]);
+        });
+    });
+
+    it("throws when no legal draw exists", () => {
+        expect(() =>
+            drawGroups(pots, ["A", "B", "C"], { canPlace: (group) => group.length < 3 }),
+        ).toThrow();
+    });
+});
+
+describe("rankThirdPlaced options", () => {
+    const row = (team: string, wins: number) => ({
+        team, points: 4, gf: 3, ga: 3, wins, played: 3, draws: 1, losses: 1, gd: 0, h2h: {},
+    });
+    const tables = { A: [row("x", 3), row("y", 2), row("A3", 1)], B: [row("x", 3), row("y", 2), row("B3", 2)] };
+
+    it("uses wins only when asked, then the seed order", () => {
+        expect(rankThirdPlaced(tables).map((t) => t.row.team)).toEqual(["B3", "A3"]);
+        expect(rankThirdPlaced(tables, { useWins: false, seedOrder: ["A3", "B3"] }).map((t) => t.row.team)).toEqual(["A3", "B3"]);
     });
 });

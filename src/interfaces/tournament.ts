@@ -2,10 +2,12 @@ import type { Pairing } from "./match.js";
 import type { LeaguePhase, Round } from "./round.js";
 import type { TableRow } from "./table.js";
 import type { Legs } from "../utils/knockout.js";
+import type { DrawRules, GroupSchedule, ThirdPlaceRanking } from "../utils/groups.js";
 
 export type Phase =
     | "groups"
     | "league"
+    | "r32"
     | "playoffs"
     | "r16"
     | "quarterfinals"
@@ -32,7 +34,7 @@ export type LeagueList =
     | "turkish";
 
 /** Competitions run by the stage-based tournament app (club and national). */
-export type UEFACompetition = "ucl" | "el" | "cl" | "euro";
+export type UEFACompetition = "ucl" | "el" | "cl" | "euro" | "wc";
 
 export type Teams = string[];
 
@@ -84,10 +86,14 @@ export interface GroupStage {
     label: string;
     /** Group letter -> teams in draw position order (A1, A2, A3, A4). */
     groups: Record<string, Teams>;
+    /** Match order within each group, by draw position. Defaults to the Euro order. */
+    schedule?: GroupSchedule;
+    /** How third-placed teams are compared across groups. */
+    thirdPlaceRanking?: ThirdPlaceRanking;
     /** Seeding pots for redrawing the groups; one team per pot per group. */
     pots?: Teams[];
-    /** Slots that stay fixed in a redraw, e.g. the host in A1. */
-    fixedDraw?: { team: string; group: string; position: number }[];
+    /** Constraints for redrawing, e.g. the host in A1 or confederation limits. */
+    drawRules?: DrawRules;
     /** Third-placed teams that go through, ranked across all groups. */
     qualifyingThirds: number;
     /** Build the next stage's context from the final group tables (best first). */

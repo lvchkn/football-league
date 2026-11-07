@@ -93,7 +93,7 @@ export const EURO_2024_FORMAT: TournamentFormat = {
             groups: EURO_2024_GROUPS,
             pots: [0, 6, 12, 18].map((i) => EURO_2024_TEAMS.slice(i, i + 6)),
             // Hosts Germany always open the tournament in A1
-            fixedDraw: [{ team: "Germany", group: "A", position: 0 }],
+            drawRules: { fixed: [{ team: "Germany", group: "A", position: 0 }] },
             qualifyingThirds: 4,
             advance: (tables) => ({ qualifiedTeams: euro2024RoundOf16(tables) }),
         },

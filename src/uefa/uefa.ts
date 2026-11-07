@@ -79,7 +79,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         const tables = computeGroupTables(stage.groups, fixtures);
         renderGroupTables(
             tables,
-            rankThirdPlaced(tables),
+            rankThirdPlaced(tables, stage.thirdPlaceRanking),
             stage.qualifyingThirds,
             fixtures,
         );
@@ -461,7 +461,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         const groups = drawGroups(
             groupStage.pots,
             Object.keys(groupStage.groups).sort(),
-            groupStage.fixedDraw ?? [],
+            groupStage.drawRules ?? {},
         );
         uefaStorage.setGroups(competition, groups);
         format = withGroups(baseFormat, groups);

@@ -9,13 +9,17 @@ import type {
 import { generateKnockoutRound } from "./utils/knockout.js";
 import { generateGroupFixtures } from "./utils/groups.js";
 import { EURO_2024_FORMAT } from "./national/euro2024.js";
+import { WC_2026_FORMAT } from "./national/worldcup2026.js";
 import { UEFA_FORMAT } from "./uefa/format.js";
 
 /**
- * Format for a competition: the Euro, or the Swiss-model club cups.
+ * Format for a competition: a national-team tournament, or the
+ * Swiss-model club cups.
  */
 export function getFormat(competition: string): TournamentFormat {
-    return competition === "euro" ? EURO_2024_FORMAT : UEFA_FORMAT;
+    if (competition === "euro") return EURO_2024_FORMAT;
+    if (competition === "wc") return WC_2026_FORMAT;
+    return UEFA_FORMAT;
 }
 
 /**
@@ -47,7 +51,7 @@ export function generateStageFixtures(
     context: UEFAContext,
 ): Round[] {
     if (stage.kind === "league") return stage.generate(teams);
-    if (stage.kind === "groups") return generateGroupFixtures(stage.groups);
+    if (stage.kind === "groups") return generateGroupFixtures(stage.groups, stage.schedule);
     return [generateKnockoutRound(stage.pairings(context), stage.legs)];
 }
 

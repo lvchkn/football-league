@@ -9,7 +9,9 @@ import { shuffleArray } from "./shuffle.js";
  * Single round-robin order for a four-team group, by draw position,
  * as used at the Euro and World Cup: 1v2 3v4, 1v3 2v4, 4v1 2v3.
  */
-const FOUR_TEAM_SCHEDULE: [number, number][][] = [
+export type GroupSchedule = [number, number][][];
+
+export const FOUR_TEAM_SCHEDULE: GroupSchedule = [
     [
         [0, 1],
         [2, 3],
@@ -28,7 +30,10 @@ const FOUR_TEAM_SCHEDULE: [number, number][][] = [
  * Group-stage fixtures: one round per matchday, holding that matchday's
  * matches for every group in letter order.
  */
-export function generateGroupFixtures(groups: Record<string, Teams>): Round[] {
+export function generateGroupFixtures(
+    groups: Record<string, Teams>,
+    schedule: GroupSchedule = FOUR_TEAM_SCHEDULE,
+): Round[] {
     const letters = Object.keys(groups).sort();
 
     letters.forEach(function (letter) {
@@ -37,7 +42,7 @@ export function generateGroupFixtures(groups: Record<string, Teams>): Round[] {
         }
     });
 
-    return FOUR_TEAM_SCHEDULE.map(function (pairs) {
+    return schedule.map(function (pairs) {
         const matches: LeagueMatch[] = letters.flatMap((letter) =>
             pairs.map(([home, away]) => ({
                 homeTeam: groups[letter]![home]!,
@@ -96,12 +101,28 @@ export interface RankedThird {
     row: TableRow;
 }
 
+export interface ThirdPlaceRanking {
+    /** Whether wins count after goals scored (UEFA: yes, FIFA: no). */
+    useWins?: boolean;
+    /** Final fallback, best first, e.g. the FIFA ranking. */
+    seedOrder?: Teams;
+}
+
 /**
  * Rank the third-placed teams across groups: points, goal difference,
- * goals scored, wins. Remaining ties fall back to group letter, standing
- * in for the disciplinary and coefficient criteria the app doesn't track.
+ * goals scored, then optionally wins. Remaining ties fall back to the seed
+ * order and then group letter, standing in for the disciplinary criteria
+ * the app doesn't track.
  */
-export function rankThirdPlaced(tables: Record<string, TableRow[]>): RankedThird[] {
+export function rankThirdPlaced(
+    tables: Record<string, TableRow[]>,
+    { useWins = true, seedOrder = [] }: ThirdPlaceRanking = {},
+): RankedThird[] {
+    const seed = (team: string) => {
+        const index = seedOrder.indexOf(team);
+        return index === -1 ? seedOrder.length : index;
+    };
+
     return Object.entries(tables)
         .filter(([, rows]) => rows[2])
         .map(([group, rows]) => ({ group, row: rows[2]! }))
@@ -112,7 +133,8 @@ export function rankThirdPlaced(tables: Record<string, TableRow[]>): RankedThird
                 y.points - x.points ||
                 y.gf - y.ga - (x.gf - x.ga) ||
                 y.gf - x.gf ||
-                y.wins - x.wins ||
+                (useWins ? y.wins - x.wins : 0) ||
+                seed(x.team) - seed(y.team) ||
                 a.group.localeCompare(b.group)
             );
         });
@@ -137,15 +159,27 @@ export interface FixedDrawSlot {
     position: number;
 }
 
+export interface DrawRules {
+    /** Teams pre-assigned to a group (and position, unless positionOf decides). */
+    fixed?: FixedDrawSlot[];
+    /** Position within a group for a team from a given pot (0-based). */
+    positionOf?: (group: string, potIndex: number) => number;
+    /** Whether a team may join a group that already holds these teams. */
+    canPlace?: (groupTeams: Teams, team: string) => boolean;
+    /** Prune draws that can no longer be completed legally. */
+    feasible?: (members: Record<string, Teams>, unplaced: Teams) => boolean;
+}
+
 /**
  * Draw groups from seeding pots: each group gets one team from every pot,
- * then positions within each group are drawn, which sets the fixture order.
- * Fixed slots (e.g. the host in A1) are honoured first.
+ * respecting fixed slots and any placement rules (backtracking when a
+ * choice leads to a dead end). Positions within a group follow
+ * `positionOf` when given, otherwise they are drawn too.
  */
 export function drawGroups(
     pots: Teams[],
     letters: string[],
-    fixed: FixedDrawSlot[] = [],
+    rules: DrawRules = {},
     rng: () => number = Math.random,
 ): Record<string, Teams> {
     pots.forEach(function (pot, i) {
@@ -154,26 +188,59 @@ export function drawGroups(
         }
     });
 
+    const { fixed = [], positionOf, canPlace = () => true, feasible = () => true } = rules;
     const fixedByTeam = new Map(fixed.map((slot) => [slot.team, slot]));
+    const potOf = new Map(pots.flatMap((pot, i) => pot.map((team) => [team, i] as const)));
     const members: Record<string, Teams> = Object.fromEntries(letters.map((l) => [l, []]));
+    const filledPots: Record<string, Set<number>> = Object.fromEntries(
+        letters.map((l) => [l, new Set<number>()]),
+    );
 
-    pots.forEach(function (pot) {
-        const openGroups = letters.filter(
-            (letter) => !pot.some((team) => fixedByTeam.get(team)?.group === letter),
-        );
-        const drawn = shuffleArray(pot.filter((team) => !fixedByTeam.has(team)), rng);
-
-        pot.forEach(function (team) {
-            const slot = fixedByTeam.get(team);
-            if (slot) members[slot.group]!.push(team);
-        });
-        drawn.forEach((team, i) => members[openGroups[i]!]!.push(team));
+    fixed.forEach(function (slot) {
+        members[slot.group]!.push(slot.team);
+        filledPots[slot.group]!.add(potOf.get(slot.team)!);
     });
+
+    const queue = pots.flatMap((pot) => shuffleArray(pot.filter((t) => !fixedByTeam.has(t)), rng));
+
+    function place(index: number): boolean {
+        if (index === queue.length) return true;
+
+        const team = queue[index]!;
+        const pot = potOf.get(team)!;
+        const candidates = shuffleArray(
+            letters.filter(
+                (letter) => !filledPots[letter]!.has(pot) && canPlace(members[letter]!, team),
+            ),
+            rng,
+        );
+
+        for (const letter of candidates) {
+            members[letter]!.push(team);
+            filledPots[letter]!.add(pot);
+
+            if (feasible(members, queue.slice(index + 1)) && place(index + 1)) return true;
+
+            members[letter]!.pop();
+            filledPots[letter]!.delete(pot);
+        }
+
+        return false;
+    }
+
+    if (!place(0)) {
+        throw new Error("No legal group draw exists for these pots and rules");
+    }
 
     return Object.fromEntries(
         letters.map(function (letter) {
             const teams = members[letter]!;
             const positions: (string | undefined)[] = new Array(teams.length).fill(undefined);
+
+            if (positionOf) {
+                teams.forEach((team) => (positions[positionOf(letter, potOf.get(team)!)] = team));
+                return [letter, positions as Teams];
+            }
 
             teams.forEach(function (team) {
                 const slot = fixedByTeam.get(team);
