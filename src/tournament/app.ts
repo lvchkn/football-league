@@ -10,8 +10,8 @@ import type {
     StageHistoryEntry,
 } from "../interfaces/tournament.js";
 
-import * as storage from "./storage.js";
-import { getFormat, getRosterVersion, getTeams } from "../competitions.js";
+import type { TournamentStorage } from "./storage.js";
+import { getFormat } from "../competitions.js";
 import {
     renderPhaseProgressionButtons,
     renderStageFixtures,
@@ -32,7 +32,7 @@ import {
 } from "./format.js";
 import { shuffleArray } from "../utils/shuffle.js";
 import {
-    ratingsFromSeeding,
+    type RatingOf,
     simulateKnockoutRound,
     simulateLeagueRounds,
 } from "../utils/simulation.js";
@@ -45,9 +45,23 @@ import {
 } from "../utils/groups.js";
 
 /**
+ * What a tournament app runs on: its teams (seeding order), where it saves,
+ * and how strong each team is in simulations. Differs between Classic and Career.
+ */
+export interface TournamentContext {
+    id: TournamentKey;
+    teams: Teams;
+    rosterVersion: string | null;
+    storage: TournamentStorage;
+    ratingOf: RatingOf;
+}
+
+/**
  * Create the app for a stage-based tournament (club or national).
  */
-export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp {
+export function createTournamentApp(ctx: TournamentContext): CompetitionApp {
+    const selectedComp = ctx.id;
+    const storage = ctx.storage;
     const baseFormat = getFormat(selectedComp);
     let format = baseFormat;
     let fixtures: Round[] = [];
@@ -119,7 +133,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
      * Load fixtures from storage or generate fresh ones.
      */
     function initializeFixtures(): void {
-        const rosterVersion = getRosterVersion(competition);
+        const rosterVersion = ctx.rosterVersion;
         currentPhase =
             storage.getPhase(competition) || format.stages[0]!.phase;
         let structure = storage.getFixturesStructure(
@@ -239,7 +253,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
             storage.setFixturesDebounced(
                 fixtures as Round[],
                 competition,
-                getRosterVersion(competition),
+                ctx.rosterVersion,
             );
             if (currentStageKind() === "knockout") {
                 renderAllFixtures();
@@ -292,7 +306,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
         if (!stage) return;
 
         const rounds = fixtures;
-        const ratingOf = ratingsFromSeeding(getTeams(competition));
+        const ratingOf = ctx.ratingOf;
         const typed = collectTypedResults(rounds, roundIndices);
 
         const simulated: MatchUpdate[] =
@@ -311,7 +325,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
         storage.setFixturesDebounced(
             rounds,
             competition,
-            getRosterVersion(competition),
+            ctx.rosterVersion,
         );
 
         if (stage.kind !== "knockout") {
@@ -323,7 +337,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
     }
 
     function archiveCurrentPhase(): void {
-        const rosterVersion = getRosterVersion(competition);
+        const rosterVersion = ctx.rosterVersion;
         storage.archivePhase(
             competition,
             currentPhase,
@@ -382,7 +396,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
             storage.setFixturesImmediate(
                 rounds,
                 competition,
-                getRosterVersion(competition),
+                ctx.rosterVersion,
             );
             currentPhase = "finished";
             storage.setPhase(competition, "finished");
@@ -416,12 +430,12 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
         storage.setFixturesStructure(
             fixtures as Round[],
             competition,
-            getRosterVersion(competition),
+            ctx.rosterVersion,
         );
         storage.setFixturesImmediate(
             fixtures as Round[],
             competition,
-            getRosterVersion(competition),
+            ctx.rosterVersion,
         );
 
         recalcTable();
@@ -463,7 +477,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
     }
 
     function init(): void {
-        teams = getTeams(competition);
+        teams = ctx.teams;
         applySavedDraw();
         initializeFixtures();
         recalcTable();
@@ -487,7 +501,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
         storage.setFixturesStructure(
             fixtures,
             competition,
-            getRosterVersion(competition),
+            ctx.rosterVersion,
         );
 
         recalcTable();
@@ -498,7 +512,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
         storage.setFixturesImmediate(
             fixtures as Round[],
             competition,
-            getRosterVersion(competition),
+            ctx.rosterVersion,
         );
     }
 
@@ -529,7 +543,7 @@ export function createTournamentApp(selectedComp: TournamentKey): CompetitionApp
         storage.setFixturesImmediate(
             fixtures as Round[],
             competition,
-            getRosterVersion(competition),
+            ctx.rosterVersion,
         );
     }
 

@@ -4,7 +4,7 @@ import type {
     MatchUpdate,
 } from "../interfaces/match.js";
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
-import type { Table, TableRow } from "../interfaces/table.js";
+import type { Table, TableRow, TableZone, ZoneKind } from "../interfaces/table.js";
 import { sortTable } from "../utils/table.js";
 import { createFormCell, createTeamCell } from "../team-detail.js";
 import {
@@ -16,7 +16,13 @@ import {
 /**
  * Render the league table in the HTML
  */
-export function renderTable(table: Table, fixtures: LeaguePhase): void {
+export function renderTable(
+    table: Table,
+    fixtures: LeaguePhase,
+    zones: TableZone[] = [],
+): void {
+    renderZoneLegend(zones);
+
     const tbody: HTMLElement | null =
         document.querySelector("#standings tbody");
 
@@ -28,6 +34,8 @@ export function renderTable(table: Table, fixtures: LeaguePhase): void {
 
     sortedTableRows.forEach((row, i) => {
         const tr: HTMLTableRowElement = document.createElement("tr");
+        const zone = zones.find((z) => i + 1 >= z.from && i + 1 <= z.to);
+        if (zone) tr.className = `zone-${zone.kind}`;
 
         const positionCell = document.createElement("td");
         positionCell.textContent = String(i + 1);
@@ -54,6 +62,46 @@ export function renderTable(table: Table, fixtures: LeaguePhase): void {
 
         tbody.appendChild(tr);
     });
+}
+
+const ZONE_LABELS: Record<ZoneKind, string> = {
+    ucl: "Champions League",
+    el: "Europa League",
+    cl: "Conference League",
+    promotion: "Promotion",
+    "promotion-playoff": "Promotion play-off",
+    "relegation-playoff": "Relegation play-off",
+    relegation: "Relegation",
+};
+
+/**
+ * Key for the highlighted table positions, shown under the standings.
+ * Empty zones remove it.
+ */
+export function renderZoneLegend(zones: TableZone[]): void {
+    let legend = document.getElementById("standings-legend");
+    if (!zones.length) {
+        legend?.remove();
+        return;
+    }
+    if (!legend) {
+        legend = document.createElement("div");
+        legend.id = "standings-legend";
+        legend.className = "standings-legend";
+        document.getElementById("standings")?.after(legend);
+    }
+
+    const kinds = [...new Set(zones.map((zone) => zone.kind))];
+    legend.replaceChildren(
+        ...kinds.map(function (kind) {
+            const item = document.createElement("span");
+            item.className = "legend-item";
+            const swatch = document.createElement("span");
+            swatch.className = `legend-swatch zone-${kind}`;
+            item.append(swatch, document.createTextNode(ZONE_LABELS[kind]));
+            return item;
+        }),
+    );
 }
 
 /**

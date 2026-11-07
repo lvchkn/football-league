@@ -658,3 +658,145 @@ button:focus-visible {
     border-bottom: 1px solid #e2e8f0;
     font-size: 0.95em;
 }
+
+/* Classic | Career switch */
+.mode-switch {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 0 auto;
+}
+
+.mode-switch button {
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.mode-switch button:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.mode-switch button:last-child {
+    border-radius: 0 8px 8px 0;
+    border-left: none;
+}
+
+.mode-switch button:hover {
+    background-color: #f1f5f9;
+    transform: none;
+    box-shadow: none;
+}
+
+.mode-switch button[aria-pressed="true"] {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
+/* Career season bar */
+.career-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: 1200px;
+    margin: -14px auto 24px;
+}
+
+.career-bar[hidden] {
+    display: none;
+}
+
+.career-season {
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+#career-history-btn,
+#reset-career-btn {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+#reset-career-btn {
+    color: #b91c1c;
+    border-color: #ef4444;
+}
+
+#career-history-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.career-dialog {
+    width: min(820px, calc(100vw - 32px));
+}
+
+.career-dialog table:not(.standings-table) th,
+.career-dialog table:not(.standings-table) td {
+    text-align: left;
+}
+
+.career-history li {
+    margin: 6px 0;
+}
+
+/* Career-mode zones in domestic tables */
+.standings-table .zone-ucl,
+.legend-swatch.zone-ucl {
+    background-color: rgba(59, 130, 246, 0.16);
+}
+
+.standings-table .zone-el,
+.legend-swatch.zone-el {
+    background-color: rgba(249, 115, 22, 0.16);
+}
+
+.standings-table .zone-cl,
+.legend-swatch.zone-cl {
+    background-color: rgba(16, 185, 129, 0.16);
+}
+
+.standings-table .zone-promotion,
+.legend-swatch.zone-promotion {
+    background-color: rgba(0, 180, 80, 0.16);
+}
+
+.standings-table .zone-promotion-playoff,
+.legend-swatch.zone-promotion-playoff,
+.standings-table .zone-relegation-playoff,
+.legend-swatch.zone-relegation-playoff {
+    background-color: rgba(234, 179, 8, 0.22);
+}
+
+.standings-table .zone-relegation,
+.legend-swatch.zone-relegation {
+    background-color: rgba(239, 68, 68, 0.14);
+}
+
+.standings-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}

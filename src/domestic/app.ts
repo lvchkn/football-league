@@ -1,29 +1,44 @@
 import type { LeagueMatch, MatchUpdate } from "../interfaces/match.js";
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
-import type { Table } from "../interfaces/table.js";
+import type { Table, TableZone } from "../interfaces/table.js";
 import type {
     Teams,
     LeagueList,
     CompetitionApp,
 } from "../interfaces/tournament.js";
 
-import * as storage from "./storage.js";
+import type { DomesticStorage } from "./storage.js";
 import { applyMatchResult, initTable, removeMatchResult } from "../utils/table.js";
-import { getRosterVersion, getTeams } from "../competitions.js";
-import { renderFixtures, renderTable } from "./ui.js";
+import { renderFixtures, renderTable, renderZoneLegend } from "./ui.js";
 import { generateFixtures } from "./fixtures.js";
+import { loadLeagueFixtures } from "./load.js";
 import { shuffleArray } from "../utils/shuffle.js";
-import { equalRatings, simulateLeagueRounds } from "../utils/simulation.js";
+import { simulateLeagueRounds, type RatingOf } from "../utils/simulation.js";
 import { collectTypedResults, syncScoreInputs } from "../simulation-controls.js";
+
+/**
+ * What a domestic league app runs on: its teams, where it saves, and how
+ * strong each team is in simulations. Differs between Classic and Career.
+ */
+export interface DomesticContext {
+    id: LeagueList;
+    teams: Teams;
+    rosterVersion: string | null;
+    storage: DomesticStorage;
+    ratingOf: RatingOf;
+    /** Highlighted table positions (Career mode). */
+    zones: TableZone[];
+}
 
 /**
  * Create a domestic league app for the given league.
  */
-export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
+export function createDomesticApp(ctx: DomesticContext): CompetitionApp {
     let fixtures: LeaguePhase = [];
     let table: Table = {};
     let teams: Teams = [];
-    const league: LeagueList = selectedLeague;
+    const league: LeagueList = ctx.id;
+    const storage = ctx.storage;
 
     /**
      * Recalculate the domestic league table from fixtures.
@@ -35,7 +50,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
                 applyMatchResult(match, table);
             }),
         );
-        renderTable(table, fixtures);
+        renderTable(table, fixtures, ctx.zones);
     }
 
     /**
@@ -46,69 +61,14 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
             removeMatchResult(update.oldMatch, table);
             applyMatchResult(update.match, table);
         });
-        renderTable(table, fixtures);
+        renderTable(table, fixtures, ctx.zones);
     }
 
     /**
      * Load fixtures from storage or generate fresh ones.
      */
     function initializeFixtures(): void {
-        const rosterVersion = getRosterVersion(league);
-        const structure = storage.getFixturesStructure(league, rosterVersion);
-
-        if (structure) {
-            fixtures = structure.map(function (round: any[]) {
-                return {
-                    matches: round.map(function (match: any) {
-                        return {
-                            homeTeam: match.homeTeam || match.home,
-                            awayTeam: match.awayTeam || match.away,
-                            homeGoals: null,
-                            awayGoals: null,
-                        };
-                    }),
-                };
-            });
-        } else {
-            fixtures = generateFixtures(teams);
-            storage.setFixturesStructure(fixtures, league, rosterVersion);
-        }
-
-        // Merge saved results
-        try {
-            const savedFixtures = storage.getFixtures(league, rosterVersion);
-
-            if (savedFixtures && Array.isArray(savedFixtures)) {
-                for (
-                    let r = 0;
-                    r < Math.min(savedFixtures.length, fixtures.length);
-                    r++
-                ) {
-                    const round = savedFixtures[r];
-                    if (!Array.isArray(round)) continue;
-                    for (
-                        let match = 0;
-                        match <
-                        Math.min(round.length, fixtures[r].matches.length);
-                        match++
-                    ) {
-                        const result = round[match];
-                        if (
-                            result &&
-                            typeof result.homeGoals !== "undefined" &&
-                            typeof result.awayGoals !== "undefined"
-                        ) {
-                            fixtures[r].matches[match].homeGoals =
-                                result.homeGoals;
-                            fixtures[r].matches[match].awayGoals =
-                                result.awayGoals;
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn("Failed to load saved results", e);
-        }
+        fixtures = loadLeagueFixtures(storage, league, teams, ctx.rosterVersion);
     }
 
     /**
@@ -120,7 +80,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
             storage.setFixturesDebounced(
                 fixtures,
                 league,
-                getRosterVersion(league),
+                ctx.rosterVersion,
             );
         };
 
@@ -133,7 +93,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
     function simulate(roundIndices: number[]): void {
         const updates = [
             ...collectTypedResults(fixtures, roundIndices),
-            ...simulateLeagueRounds(fixtures, roundIndices, equalRatings),
+            ...simulateLeagueRounds(fixtures, roundIndices, ctx.ratingOf),
         ];
         if (updates.length === 0) return;
 
@@ -142,12 +102,12 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesDebounced(
             fixtures,
             league,
-            getRosterVersion(league),
+            ctx.rosterVersion,
         );
     }
 
     function init(): void {
-        teams = getTeams(league);
+        teams = ctx.teams;
         initializeFixtures();
         recalcTable();
         renderAllFixtures();
@@ -159,7 +119,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesStructure(
             fixtures,
             league,
-            getRosterVersion(league),
+            ctx.rosterVersion,
         );
         recalcTable();
         renderAllFixtures();
@@ -169,7 +129,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesImmediate(
             fixtures,
             league,
-            getRosterVersion(league),
+            ctx.rosterVersion,
         );
     }
 
@@ -192,11 +152,12 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesImmediate(
             fixtures,
             league,
-            getRosterVersion(league),
+            ctx.rosterVersion,
         );
     }
 
     function destroy(): void {
+        renderZoneLegend([]);
         storage.cancelPendingSave(league);
         table = {};
         fixtures = [];

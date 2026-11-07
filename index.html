@@ -2,18 +2,25 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Fantasy League Simulator</title>
+        <title>Fantasy Football Simulator</title>
         <link rel="stylesheet" href="styles.css" />
         <link rel="icon" href="/favicon-96x96.png" />
     </head>
 
     <body>
-        <h1>Fantasy League Simulator</h1>
+        <h1>Fantasy Football Simulator</h1>
+
+        <div class="mode-switch" role="group" aria-label="Mode">
+            <button type="button" data-mode="classic">Classic</button>
+            <button type="button" data-mode="career">Career</button>
+        </div>
 
         <label for="league-selector">Choose a league:</label>
         <select id="league-selector" aria-label="Select league">
             <!-- Filled from src/competitions.ts -->
         </select>
+
+        <div id="career-bar" class="career-bar" hidden></div>
 
         <div class="container">
             <div class="standings-section">
