@@ -1,48 +1,41 @@
 # Fantasy League Simulator
 
-A simple, lightweight, browser-based multi-league football simulator. Choose from a variety of top European leagues or UEFA competitions, generate fixtures for a round-robin tournament, enter match results, and watch the standings update in real-time. All results persist automatically per league and competition via browser localStorage.
+A lightweight browser-based football simulator. Pick a domestic league, a UEFA club competition or a national-team tournament, enter or simulate results, and follow the standings. Progress is saved per competition in localStorage.
+
+## Competitions
+
+- **Domestic leagues**: top flights and second tiers of major European leagues, played as a double round-robin.
+- **UEFA club competitions** (Champions, Europa, Conference League): 36-team league phase, knockout playoffs, two-legged ties up to the semi-finals, and a single-match final.
+- **FIFA World Cup 2026**: 12 groups of four, best eight third-placed teams, round of 32 to the final.
+- **UEFA Euro 2024**: 6 groups of four, best four third-placed teams, round of 16 to the final.
+
+Both national-team tournaments use the real groups and the official brackets, including the regulations' tables that decide which group winner each third-placed team plays.
 
 ## Features
 
-- **Multiple Competitions**: Switch between several European leagues (English Premier League, Spanish La Liga, Italian Serie A, German Bundesliga, etc.) as well as UEFA competitions.
-- **Round-robin Fixture Generation**: Automatically generates a double round-robin schedule for the selected league's teams (uses the circle method for fair pairings).
-- **Real-time Standings**: The league table updates instantly as you enter and apply match results.
-- **Persistent Progress**: Scores and fixtures are automatically saved to browser storage for each league independently. Your progress is preserved even after a page reload.
-- **Flexible Controls**:
-    - **Save**: Manually force an immediate save of all current results.
-    - **Reset scores**: Clear all match results for the current league while keeping the fixture list.
-    - **Regenerate fixtures**: Scramble the teams and generate a completely new schedule.
-- **Enhanced Navigation**: A "Scroll to top" button helps you navigate quickly through long fixture lists.
+- **Results**: enter scores per match or per matchday. A drawn knockout tie is decided by a penalty shootout.
+- **Simulation**: fill a matchday or all remaining matches with random scores. Home sides get a small edge, and in UEFA and national-team competitions stronger seeds win more often.
+- **Standings**: live tables with head-to-head tie-breakers, last-five form, and group tables with a third-placed ranking.
+- **Team view**: click a team for its results, home/away record and head-to-head record.
+- **Stage history**: browse completed stages of a tournament.
+- **Controls**: Save, Reset scores (keeps fixtures), Regenerate fixtures (reshuffles fixtures; for national teams, makes a new group draw under the real draw rules).
 
-## How to Use
+## Getting started
 
-1. **Install Dependencies**: Run `pnpm install` in the project root.
-2. **Build the project**: Run `pnpm run build` to build the project.
-3. **Start Dev Server**: Run `pnpm run dev` to start the local Vite development server and open the provided URL.
-4. **Select a League**: Use the dropdown menu at the top to choose your preferred domestic European league or UEFA competition.
-5. **Manage Fixtures**:
-    - The app generates a full schedule based on the teams defined in `src/domestic/teams.ts` and `src/uefa/teams.ts`.
-    - Use the **Regenerate fixtures** button if you want to start with a fresh, randomized schedule.
-6. **Enter Results**:
-    - For each matchday, enter goals for the home and away teams in the numeric fields.
-    - Click **Apply result** to record an individual match.
-    - Click **Apply all results** at the bottom of a matchday to submit all scores for that round at once.
-7. **Monitor Standings**: Watch the "Standings" table on the left (or top on narrow screens) to see how results affect team rankings.
-8. **Saving & Resetting**:
-    - Results are automatically saved (debounced), but you can use the **Save** button for peace of mind.
-    - Use **Reset scores** to wipe the slate clean for the current league/competition.
-9. **Quick Navigation**: Use the "↑" button in the bottom-right corner to jump back to the standings at any time.
+```sh
+pnpm install
+pnpm test     # run unit tests
+pnpm build    # type-check and build
+pnpm dev      # start the Vite dev server
+```
 
-## Project Structure
+## Project structure
 
-- `index.html`: Main entry point and UI structure.
-- `styles.css`: Styling with support for dynamic UI elements.
-- `src/`: Contains TypeScript source files.
-  - `app.ts`: Main application entry point.
-  - `interfaces/`: Shared interfaces.
-  - `domestic/`: Logic for domestic leagues.
-  - `uefa/`: Logic for UEFA cup structures.
-  - `utils/`: Common utilities and shared logic.
-- `vite.config.ts`: Configuration for Vite development and build.
-- `wrangler.jsonc`: Cloudflare Pages deployment configuration.
-  
+- `src/app.ts`: entry point; switches between competitions.
+- `src/domestic/`: domestic leagues.
+- `src/uefa/`: tournament app for stage-based competitions, plus UEFA club formats and teams.
+- `src/national/`: World Cup 2026 and Euro 2024 data and formats.
+- `src/tournament-format.ts`: stage-based format definitions.
+- `src/utils/`: group, knockout, simulation and stats logic.
+- `src/team-detail.ts`, `src/simulation-controls.ts`: shared UI.
+- `wrangler.jsonc`: Cloudflare deployment config.

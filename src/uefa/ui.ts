@@ -1,27 +1,25 @@
 import type { Match, MatchUpdate } from "../interfaces/match.js";
 import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
-import type { Phase, UEFAHistoryEntry } from "../interfaces/tournament.js";
+import type { Phase, Stage, UEFAHistoryEntry } from "../interfaces/tournament.js";
 import { sortUEFATable } from "./table.js";
-
-/**
- * Human-readable label for each UEFA phase.
- */
-const PHASE_LABELS: Record<Phase, string> = {
-    league: "League Phase",
-    playoffs: "Knockout Playoffs",
-    r16: "Round of 16",
-    quarterfinals: "Quarter-finals",
-    semifinals: "Semi-finals",
-    final: "Final",
-    finished: "Finished",
-};
+import { groupLookup } from "../utils/groups.js";
+import { createFormCell, createTeamCell } from "../team-detail.js";
+import {
+    createMatchdayActions,
+    createSimulateAllBar,
+    createSimulateRoundButton,
+} from "../simulation-controls.js";
 
 /**
  * Render the UEFA league table in the #standings element.
  * Only meaningful during the league phase.
  */
-export function renderUEFATable(table: Table, phase: Phase) {
+export function renderUEFATable(
+    table: Table,
+    visible: boolean,
+    fixtures: LeagueRound[] = [],
+) {
     const standingsSection: HTMLElement | null =
         document.querySelector(".standings-section");
 
@@ -30,15 +28,13 @@ export function renderUEFATable(table: Table, phase: Phase) {
 
     if (!tbody) return;
 
-    // During knockout phases, hide the league table and show a summary instead
-    if (phase !== "league") {
+    // Knockout stages have no table
+    if (!visible) {
         if (standingsSection) standingsSection.style.display = "none";
         return;
     }
 
-    if (standingsSection) {
-        standingsSection.style.display = "";
-    }
+    resetStandingsView();
 
     tbody.innerHTML = "";
 
@@ -54,9 +50,11 @@ export function renderUEFATable(table: Table, phase: Phase) {
             tr.style.backgroundColor = "rgba(255,165,0,0.10)"; // 9-24 — playoffs
         }
 
+        const positionCell = document.createElement("td");
+        positionCell.textContent = String(i + 1);
+        tr.append(positionCell, createTeamCell(fixtures, row.team));
+
         const cells = [
-            i + 1,
-            row.team,
             row.played,
             row.wins,
             row.draws,
@@ -73,8 +71,139 @@ export function renderUEFATable(table: Table, phase: Phase) {
             tr.appendChild(td);
         });
 
+        tr.appendChild(createFormCell(fixtures, row.team));
+
         tbody.appendChild(tr);
     });
+}
+
+/**
+ * Show the single standings table and clear any group tables, e.g. when
+ * leaving a competition or stage that used them.
+ */
+export function resetStandingsView(): void {
+    const section = document.querySelector<HTMLElement>(".standings-section");
+    const mainTable = document.getElementById("standings");
+    const groupContainer = document.getElementById("group-standings");
+
+    if (section) section.style.display = "";
+    if (mainTable) mainTable.style.display = "";
+    if (groupContainer) groupContainer.innerHTML = "";
+}
+
+const STANDINGS_HEADERS = ["#", "Team", "Played", "W", "D", "L", "GF", "GA", "GD", "Pts", "Form"];
+
+function _standingsTable(headers: string[]): { table: HTMLTableElement; tbody: HTMLTableSectionElement } {
+    const table = document.createElement("table");
+    table.className = "standings-table";
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    headers.forEach(function (header) {
+        const th = document.createElement("th");
+        th.textContent = header;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    const tbody = document.createElement("tbody");
+    table.append(thead, tbody);
+    return { table, tbody };
+}
+
+function _cell(value: string | number): HTMLTableCellElement {
+    const td = document.createElement("td");
+    td.textContent = String(value);
+    return td;
+}
+
+/**
+ * Render one table per group plus the ranking of third-placed teams.
+ * Rows currently in a qualifying position are highlighted.
+ */
+export function renderGroupTables(
+    tables: Record<string, TableRow[]>,
+    thirds: { group: string; row: TableRow }[],
+    qualifyingThirds: number,
+    fixtures: Round[],
+): void {
+    const section = document.querySelector<HTMLElement>(".standings-section");
+    const mainTable = document.getElementById("standings");
+    const container = document.getElementById("group-standings");
+    if (!container) return;
+
+    if (section) section.style.display = "";
+    if (mainTable) mainTable.style.display = "none";
+    container.innerHTML = "";
+
+    const qualifyingThirdTeams = new Set(
+        thirds.slice(0, qualifyingThirds).map((t) => t.row.team),
+    );
+
+    Object.entries(tables).forEach(function ([letter, rows]) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Group " + letter;
+
+        const { table, tbody } = _standingsTable(STANDINGS_HEADERS);
+        rows.forEach(function (row, i) {
+            const tr = document.createElement("tr");
+            if (i < 2 || (i === 2 && qualifyingThirdTeams.has(row.team))) {
+                tr.className = "qualified";
+            }
+            tr.append(
+                _cell(i + 1),
+                createTeamCell(fixtures, row.team),
+                _cell(row.played),
+                _cell(row.wins),
+                _cell(row.draws),
+                _cell(row.losses),
+                _cell(row.gf),
+                _cell(row.ga),
+                _cell(row.gf - row.ga),
+                _cell(row.points),
+                createFormCell(fixtures, row.team),
+            );
+            tbody.appendChild(tr);
+        });
+
+        container.append(heading, table);
+    });
+
+    if (qualifyingThirds > 0 && thirds.length > 0) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Third-placed teams";
+
+        const { table, tbody } = _standingsTable(["#", "Team", "Played", "W", "D", "L", "GF", "GA", "GD", "Pts"]);
+        thirds.forEach(function ({ group, row }, i) {
+            const tr = document.createElement("tr");
+            tr.className = i < qualifyingThirds ? "qualified" : "contention";
+
+            const teamCell = createTeamCell(fixtures, row.team);
+            const tag = document.createElement("span");
+            tag.className = "group-tag";
+            tag.textContent = group;
+            teamCell.appendChild(tag);
+
+            tr.append(
+                _cell(i + 1),
+                teamCell,
+                _cell(row.played),
+                _cell(row.wins),
+                _cell(row.draws),
+                _cell(row.losses),
+                _cell(row.gf),
+                _cell(row.ga),
+                _cell(row.gf - row.ga),
+                _cell(row.points),
+            );
+            tbody.appendChild(tr);
+        });
+
+        const note = document.createElement("p");
+        note.className = "standings-note";
+        note.textContent =
+            `Top two in each group and the best ${qualifyingThirds} third-placed teams reach the knockout stage.`;
+
+        container.append(heading, table, note);
+    }
 }
 
 /**
@@ -231,10 +360,11 @@ function _renderPenaltyShootout(
 export function renderUEFAFixtures(
     fixtures: Round[],
     onResultsApplied: (updates: MatchUpdate[]) => void,
-    phase: Phase,
+    stage: Stage,
+    bannerText: string,
     readOnly = false,
+    onSimulate?: (roundIndices: number[]) => void,
 ) {
-    phase = phase || "league";
     const container: HTMLElement | null = document.getElementById("fixtures");
     if (!container) return;
 
@@ -243,18 +373,22 @@ export function renderUEFAFixtures(
     const banner: HTMLDivElement = document.createElement("div");
     banner.className = "phase-indicator";
     const strong = document.createElement("strong");
-    strong.textContent =
-        (readOnly ? "Viewing completed phase: " : "Current Phase: ") +
-        (PHASE_LABELS[phase] || phase);
+    strong.textContent = bannerText;
     banner.appendChild(strong);
     container.appendChild(banner);
 
-    const isKnockout: boolean = phase !== "league";
+    if (!readOnly && onSimulate) {
+        container.appendChild(
+            createSimulateAllBar(() => onSimulate(fixtures.map((_, i) => i))),
+        );
+    }
 
-    // For knockout phases, wrap the callback so aggregate displays refresh
+    const isTwoLegKnockout = stage.kind === "knockout" && stage.legs === 2;
+
+    // For two-leg ties, wrap the callback so aggregate displays refresh
     let wrappedOnResultsApplied = onResultsApplied;
 
-    if (isKnockout && phase !== "final" && phase !== "finished") {
+    if (isTwoLegKnockout) {
         wrappedOnResultsApplied = function (updates: MatchUpdate[]) {
             onResultsApplied(updates);
             _refreshAllAggregates(container, fixtures);
@@ -265,19 +399,25 @@ export function renderUEFAFixtures(
         const div: HTMLDivElement = document.createElement("div");
         div.className = "matchday";
 
-        let roundLabel: string;
-
-        if (phase === "league") {
-            roundLabel = "Matchday " + (i + 1);
-        } else {
-            roundLabel = PHASE_LABELS[phase] || "Round " + (i + 1);
-        }
+        const roundLabel: string =
+            stage.kind === "knockout" ? stage.label : "Matchday " + (i + 1);
 
         const h3 = document.createElement("h3");
         h3.textContent = roundLabel;
         div.appendChild(h3);
 
-        if (isKnockout && phase !== "final" && phase !== "finished") {
+        if (stage.kind === "league" || stage.kind === "groups") {
+            const groupOf =
+                stage.kind === "groups" ? groupLookup(stage.groups) : null;
+            _renderLeagueRound(
+                div,
+                round as LeagueRound,
+                i,
+                wrappedOnResultsApplied,
+                readOnly,
+                groupOf ? (match) => "Group " + groupOf(match.homeTeam) : null,
+            );
+        } else if (stage.legs === 2) {
             _renderKnockoutRound(
                 div,
                 round as KnockoutRound,
@@ -286,25 +426,10 @@ export function renderUEFAFixtures(
                 readOnly,
             );
         } else {
-            _renderLeagueRound(
+            _renderSingleLegRound(
                 div,
-                round as LeagueRound,
+                round,
                 i,
-                wrappedOnResultsApplied,
-                readOnly,
-            );
-        }
-
-        if (
-            (phase === "final" || phase === "finished") &&
-            round.matches[0] &&
-            _hasCompletedScore(round.matches[0]) &&
-            round.matches[0].homeGoals === round.matches[0].awayGoals
-        ) {
-            _renderPenaltyShootout(
-                div,
-                round.matches[0],
-                "r" + i + "_final",
                 wrappedOnResultsApplied,
                 readOnly,
             );
@@ -355,7 +480,13 @@ export function renderUEFAFixtures(
                 wrappedOnResultsApplied(updates);
             });
 
-            div.appendChild(applyAllResultsButton);
+            // Knockout phases are a single round, covered by the top bar
+            const actionButtons =
+                stage.kind !== "knockout" && onSimulate
+                    ? [createSimulateRoundButton(() => onSimulate([i])), applyAllResultsButton]
+                    : [applyAllResultsButton];
+
+            div.appendChild(createMatchdayActions(...actionButtons));
         }
 
         container.appendChild(div);
@@ -371,6 +502,7 @@ function _renderLeagueRound(
     roundIdx: number,
     onResultsApplied: (updates: MatchUpdate[]) => void,
     readOnly: boolean,
+    labelOf: ((match: Match) => string) | null = null,
 ): void {
     round.matches.forEach(function (match: Match, idx: number) {
         const matchRow: HTMLDivElement = _createMatchRow(
@@ -378,11 +510,40 @@ function _renderLeagueRound(
             roundIdx,
             idx,
             onResultsApplied,
-            null,
+            labelOf ? labelOf(match) : null,
             readOnly,
         );
 
         container.appendChild(matchRow);
+    });
+}
+
+/**
+ * Render single-match ties; a drawn match gets a penalty shootout below it.
+ */
+function _renderSingleLegRound(
+    container: HTMLDivElement,
+    round: Round,
+    roundIdx: number,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
+    readOnly: boolean,
+): void {
+    round.matches.forEach(function (match: Match, idx: number) {
+        container.appendChild(
+            _createMatchRow(match, roundIdx, idx, onResultsApplied, null, readOnly),
+        );
+
+        if (_hasCompletedScore(match) && match.homeGoals === match.awayGoals) {
+            _renderPenaltyShootout(
+                container,
+                match,
+                "r" + roundIdx + "_m" + idx,
+                onResultsApplied,
+                readOnly,
+            );
+            // Sits directly under its match instead of after a divider
+            container.lastElementChild?.classList.add("single-leg-shootout");
+        }
     });
 }
 
@@ -564,6 +725,7 @@ function _createMatchRow(
  */
 export function renderUEFAHistoryControls(
     history: UEFAHistoryEntry[],
+    labelOf: (phase: Phase) => string,
     currentPhase: Phase,
     viewedHistoryPhase: Phase | null,
     onHistorySelect: (phase: Phase) => void,
@@ -587,13 +749,13 @@ export function renderUEFAHistoryControls(
     const currentOption = document.createElement("option");
     currentOption.value = "current";
     currentOption.textContent =
-        "Current: " + (PHASE_LABELS[currentPhase] || currentPhase);
+        "Current: " + labelOf(currentPhase);
     selector.appendChild(currentOption);
 
     history.forEach(function (entry) {
         const option = document.createElement("option");
         option.value = entry.phase;
-        option.textContent = PHASE_LABELS[entry.phase] || entry.phase;
+        option.textContent = labelOf(entry.phase);
         selector.appendChild(option);
     });
 

@@ -84,7 +84,7 @@ table {
     table-layout: fixed;
 }
 
-#standings {
+.standings-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
@@ -92,7 +92,7 @@ table {
 }
 
 /* Sticky header: the container that scrolls is .standings-section */
-#standings thead th {
+.standings-table thead th {
     position: sticky;
     top: 0;
     background: #f1f5f9;
@@ -100,8 +100,8 @@ table {
     border-bottom: 2px solid #e2e8f0;
 }
 
-#standings th,
-#standings td {
+.standings-table th,
+.standings-table td {
     padding: 8px 6px;
     overflow-wrap: anywhere;
     border: none;
@@ -110,24 +110,145 @@ table {
     font-size: 13px;
 }
 
-#standings th:nth-child(1),
-#standings td:nth-child(1) {
+.standings-table th:nth-child(1),
+.standings-table td:nth-child(1) {
     width: 30px;
 }
 
-#standings th:nth-child(2),
-#standings td:nth-child(2) {
+.standings-table th:nth-child(2),
+.standings-table td:nth-child(2) {
     width: 120px;
 }
 
-#standings th:nth-child(n + 3),
-#standings td:nth-child(n + 3) {
+.standings-table th:nth-child(n + 3),
+.standings-table td:nth-child(n + 3) {
     width: 50px;
 }
 
-/* Scope general table cell styles to tables other than #standings */
-table:not(#standings) th,
-table:not(#standings) td {
+.standings-table th:nth-child(n + 4),
+.standings-table td:nth-child(n + 4) {
+    width: 38px;
+}
+
+.standings-table th:nth-child(11),
+.standings-table td:nth-child(11) {
+    width: 86px;
+}
+
+/* Form badges (W/D/L) */
+.form-cell {
+    white-space: nowrap;
+}
+
+.form-badge {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    line-height: 15px;
+    margin: 0 1px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    cursor: default;
+}
+
+.form-W {
+    background-color: #16a34a;
+}
+
+.form-D {
+    background-color: #94a3b8;
+}
+
+.form-L {
+    background-color: #dc2626;
+}
+
+/* Team name rendered as a link-style button in the standings */
+button.team-link {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    color: #1d4ed8;
+    font: inherit;
+    text-align: inherit;
+    overflow-wrap: anywhere;
+}
+
+button.team-link:hover {
+    background: none;
+    box-shadow: none;
+    transform: none;
+    text-decoration: underline;
+}
+
+/* Team detail modal */
+.team-detail {
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    color: #334155;
+    background-color: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.team-detail::backdrop {
+    background-color: rgba(15, 23, 42, 0.45);
+}
+
+.team-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.team-detail-header h2 {
+    margin: 0;
+}
+
+button.team-detail-close {
+    background: none;
+    color: #475569;
+    box-shadow: none;
+    font-size: 24px;
+    line-height: 1;
+    padding: 2px 8px;
+}
+
+button.team-detail-close:hover {
+    background-color: #f1f5f9;
+    box-shadow: none;
+    transform: none;
+}
+
+.team-detail section h3 {
+    margin: 20px 0 8px;
+}
+
+.team-detail table {
+    max-width: none;
+    table-layout: auto;
+}
+
+.team-detail table:not(.standings-table) th,
+.team-detail table:not(.standings-table) td {
+    font-size: 13px;
+    padding: 6px;
+}
+
+.team-detail-empty {
+    color: #64748b;
+}
+
+/* Scope general table cell styles to tables other than .standings-table */
+table:not(.standings-table) th,
+table:not(.standings-table) td {
     border: none;
     border-bottom: 1px solid #f1f5f9;
     padding: 8px 6px;
@@ -141,8 +262,8 @@ th {
     font-weight: 600;
 }
 
-#standings tbody tr:hover,
-table:not(#standings) tbody tr:hover {
+.standings-table tbody tr:hover,
+table:not(.standings-table) tbody tr:hover {
     background-color: #f8fafc;
     transition: background-color 0.2s ease;
 }
@@ -166,6 +287,34 @@ table:not(#standings) tbody tr:hover {
 .apply-all-btn {
     display: block;
     margin: 15px auto 0;
+}
+
+.matchday-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.matchday-actions .apply-all-btn {
+    margin: 0;
+}
+
+.simulate-bar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+button.simulate-btn {
+    background-color: #ffffff;
+    color: #6d28d9;
+    border: 1px solid #8b5cf6;
+}
+
+button.simulate-btn:hover {
+    background-color: #f5f3ff;
 }
 
 .match {
@@ -270,20 +419,32 @@ table:not(#standings) tbody tr:hover {
         font-size: 12px;
     }
 
-    #standings th,
-    #standings td {
+    .standings-table th,
+    .standings-table td {
         padding: 3px 4px;
         font-size: 11px;
     }
 
-    #standings th:nth-child(2),
-    #standings td:nth-child(2) {
+    .standings-table th:nth-child(2),
+    .standings-table td:nth-child(2) {
         width: 80px;
     }
 
-    #standings th:nth-child(n + 3),
-    #standings td:nth-child(n + 3) {
+    .standings-table th:nth-child(n + 3),
+    .standings-table td:nth-child(n + 3) {
         width: 40px;
+    }
+
+    .standings-table th:nth-child(11),
+    .standings-table td:nth-child(11) {
+        width: 80px;
+    }
+
+    .form-badge {
+        width: 14px;
+        height: 14px;
+        line-height: 14px;
+        font-size: 9px;
     }
 
     .matchday {
@@ -458,4 +619,42 @@ button:focus-visible {
 
 .phase-buttons button:active {
     transform: translateY(0);
+}
+
+/* Group stage: one compact table per group plus the third-placed ranking */
+#group-standings h3 {
+    margin: 18px 0 6px;
+    font-size: 15px;
+}
+
+#group-standings h3:first-child {
+    margin-top: 0;
+}
+
+.standings-table .qualified {
+    background-color: rgba(0, 180, 80, 0.12);
+}
+
+.standings-table .contention {
+    background-color: rgba(255, 165, 0, 0.1);
+}
+
+.group-tag {
+    color: #64748b;
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+.standings-note {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.penalty-shootout.single-leg-shootout {
+    margin: -4px 0 10px;
+    padding: 0 0 10px;
+    border-top: none;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.95em;
 }

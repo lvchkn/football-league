@@ -37,12 +37,16 @@
                 <option value="el">UEFA Europa League</option>
                 <option value="cl">UEFA Conference League</option>
             </optgroup>
+            <optgroup label="National Teams">
+                <option value="wc">FIFA World Cup 2026</option>
+                <option value="euro">UEFA Euro 2024</option>
+            </optgroup>
         </select>
 
         <div class="container">
             <div class="standings-section">
                 <h2>Standings</h2>
-                <table id="standings">
+                <table id="standings" class="standings-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -55,10 +59,12 @@
                             <th>GA</th>
                             <th>GD</th>
                             <th>Pts</th>
+                            <th>Form</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+                <div id="group-standings"></div>
             </div>
 
             <div class="fixtures-section">

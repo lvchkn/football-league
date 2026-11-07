@@ -6,11 +6,17 @@ import type {
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
 import { sortTable } from "./table.js";
+import { createFormCell, createTeamCell } from "../team-detail.js";
+import {
+    createMatchdayActions,
+    createSimulateAllBar,
+    createSimulateRoundButton,
+} from "../simulation-controls.js";
 
 /**
  * Render the league table in the HTML
  */
-export function renderTable(table: Table): void {
+export function renderTable(table: Table, fixtures: LeaguePhase): void {
     const tbody: HTMLElement | null =
         document.querySelector("#standings tbody");
 
@@ -23,9 +29,11 @@ export function renderTable(table: Table): void {
     sortedTableRows.forEach((row, i) => {
         const tr: HTMLTableRowElement = document.createElement("tr");
 
+        const positionCell = document.createElement("td");
+        positionCell.textContent = String(i + 1);
+        tr.append(positionCell, createTeamCell(fixtures, row.team));
+
         const cells = [
-            i + 1,
-            row.team,
             row.played,
             row.wins,
             row.draws,
@@ -42,6 +50,8 @@ export function renderTable(table: Table): void {
             tr.appendChild(td);
         });
 
+        tr.appendChild(createFormCell(fixtures, row.team));
+
         tbody.appendChild(tr);
     });
 }
@@ -52,12 +62,17 @@ export function renderTable(table: Table): void {
 export function renderFixtures(
     fixtures: LeaguePhase,
     onResultsApplied: (updates: MatchUpdate[]) => void,
+    onSimulate: (roundIndices: number[]) => void,
 ): void {
     const container: HTMLElement | null = document.getElementById("fixtures");
 
     if (!container) return;
 
     container.innerHTML = "";
+
+    container.appendChild(
+        createSimulateAllBar(() => onSimulate(fixtures.map((_, i) => i))),
+    );
 
     fixtures.forEach((round: LeagueRound, i: number) => {
         const div: HTMLDivElement = document.createElement("div");
@@ -193,7 +208,12 @@ export function renderFixtures(
             onResultsApplied(updates);
         });
 
-        div.appendChild(applyAllResultsButton);
+        div.appendChild(
+            createMatchdayActions(
+                createSimulateRoundButton(() => onSimulate([i])),
+                applyAllResultsButton,
+            ),
+        );
 
         container.appendChild(div);
     });

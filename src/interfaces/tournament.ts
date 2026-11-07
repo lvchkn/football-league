@@ -1,7 +1,13 @@
-import type { Round } from "./round.js";
+import type { Pairing } from "./match.js";
+import type { LeaguePhase, Round } from "./round.js";
+import type { TableRow } from "./table.js";
+import type { Legs } from "../utils/knockout.js";
+import type { DrawRules, GroupSchedule, ThirdPlaceRanking } from "../utils/groups.js";
 
 export type Phase =
+    | "groups"
     | "league"
+    | "r32"
     | "playoffs"
     | "r16"
     | "quarterfinals"
@@ -27,7 +33,8 @@ export type LeagueList =
     | "greek"
     | "turkish";
 
-export type UEFACompetition = "ucl" | "el" | "cl";
+/** Competitions run by the stage-based tournament app (club and national). */
+export type UEFACompetition = "ucl" | "el" | "cl" | "euro" | "wc";
 
 export type Teams = string[];
 
@@ -43,6 +50,64 @@ export interface UEFAContext {
     playoffWinners?: string[];
     qualifiedTeams?: string[];
     finalists?: string[];
+}
+
+/**
+ * A round-robin stage whose final standings decide who advances.
+ */
+export interface LeagueStage {
+    kind: "league";
+    phase: Phase;
+    label: string;
+    generate(teams: Teams): LeaguePhase;
+    /** Build the context for the next stage from the final standings (best first). */
+    advance(standings: Teams, context: UEFAContext): UEFAContext;
+}
+
+/**
+ * A knockout stage played over one or two legs per tie.
+ */
+export interface KnockoutStage {
+    kind: "knockout";
+    phase: Phase;
+    label: string;
+    legs: Legs;
+    pairings(context: UEFAContext): Pairing[];
+    /** Build the context for the next stage; omitted on the last stage. */
+    advance?(winners: Teams, context: UEFAContext): UEFAContext;
+}
+
+/**
+ * Small round-robin groups played in parallel (e.g. the Euro group stage).
+ */
+export interface GroupStage {
+    kind: "groups";
+    phase: Phase;
+    label: string;
+    /** Group letter -> teams in draw position order (A1, A2, A3, A4). */
+    groups: Record<string, Teams>;
+    /** Match order within each group, by draw position. Defaults to the Euro order. */
+    schedule?: GroupSchedule;
+    /** How third-placed teams are compared across groups. */
+    thirdPlaceRanking?: ThirdPlaceRanking;
+    /** Seeding pots for redrawing the groups; one team per pot per group. */
+    pots?: Teams[];
+    /** Constraints for redrawing, e.g. the host in A1 or confederation limits. */
+    drawRules?: DrawRules;
+    /** Third-placed teams that go through, ranked across all groups. */
+    qualifyingThirds: number;
+    /** Build the next stage's context from the final group tables (best first). */
+    advance(tables: Record<string, TableRow[]>, context: UEFAContext): UEFAContext;
+}
+
+export type Stage = LeagueStage | GroupStage | KnockoutStage;
+
+/**
+ * Ordered stages of a competition. The winner of the last stage's
+ * only tie is the champion.
+ */
+export interface TournamentFormat {
+    stages: Stage[];
 }
 
 /**

@@ -1,10 +1,7 @@
-import type { Phase, UEFAContext } from "../interfaces/tournament.js";
-import type {
-    KnockoutMatch,
-    LeagueMatch,
-    Match,
-    Pairing,
-} from "../interfaces/match.js";
+import type { LeagueMatch, Pairing } from "../interfaces/match.js";
+import { generateKnockoutRound } from "../utils/knockout.js";
+
+export { getKnockoutWinners, getTieWinner } from "../utils/knockout.js";
 import type {
     KnockoutRound,
     LeaguePhase,
@@ -92,106 +89,7 @@ export function generateLeagueFixtures(teamNames: string[]): LeaguePhase {
  * In each pairing the first team is home in Leg 1, second team is home in Leg 2.
  */
 export function generateKnockoutFixtures(pairings: Pairing[]): KnockoutRound {
-    const matches: KnockoutMatch[] = [];
-
-    pairings.forEach(function (pair, i) {
-        matches.push({
-            homeTeam: pair.homeTeam,
-            awayTeam: pair.awayTeam,
-            homeGoals: null,
-            awayGoals: null,
-            leg: 1,
-            tieIndex: i,
-        });
-        matches.push({
-            homeTeam: pair.awayTeam,
-            awayTeam: pair.homeTeam,
-            homeGoals: null,
-            awayGoals: null,
-            leg: 2,
-            tieIndex: i,
-        });
-    });
-
-    const knockoutRound: KnockoutRound = {
-        matches,
-    };
-
-    return knockoutRound;
-}
-
-/**
- * Generate a single-match final fixture.
- */
-export function generateFinalFixture(teamA: string, teamB: string): Match {
-    return {
-        homeTeam: teamA,
-        awayTeam: teamB,
-        homeGoals: null,
-        awayGoals: null,
-    };
-}
-
-/**
- * Determine the winner of a completed two-leg tie.
- * A level aggregate requires a decisive penalty shootout in Leg 2.
- */
-export function getTieWinner(leg1: Match, leg2: Match): string | null {
-    if (
-        leg1.homeGoals === null ||
-        leg1.awayGoals === null ||
-        leg2.homeGoals === null ||
-        leg2.awayGoals === null
-    ) {
-        return null;
-    }
-
-    const team1: string = leg1.homeTeam;
-    const aggregate1: number = leg1.homeGoals + leg2.awayGoals;
-
-    const team2: string = leg1.awayTeam;
-    const aggregate2: number = leg1.awayGoals + leg2.homeGoals;
-
-    if (aggregate1 > aggregate2) return team1;
-    if (aggregate2 > aggregate1) return team2;
-
-    const leg2HomePenalties = leg2.homePenalties;
-    const leg2AwayPenalties = leg2.awayPenalties;
-
-    if (
-        typeof leg2HomePenalties !== "number" ||
-        typeof leg2AwayPenalties !== "number" ||
-        !Number.isInteger(leg2HomePenalties) ||
-        !Number.isInteger(leg2AwayPenalties) ||
-        leg2HomePenalties < 0 ||
-        leg2AwayPenalties < 0 ||
-        leg2HomePenalties === leg2AwayPenalties
-    ) {
-        return null;
-    }
-
-    return leg2HomePenalties > leg2AwayPenalties
-        ? leg2.homeTeam
-        : leg2.awayTeam;
-}
-
-/**
- * Extract every tie winner from a set of two-leg knockout fixtures.
- * Matches in the flat list are expected to alternate: leg1, leg2, leg1, leg2, ...
- */
-export function getKnockoutWinners(fixtures: KnockoutRound): string[] {
-    const matches: KnockoutMatch[] = fixtures.matches;
-    const winners: string[] = [];
-
-    for (let i = 0; i < matches.length; i += 2) {
-        const winner: string | null = getTieWinner(matches[i], matches[i + 1]);
-
-        if (winner) {
-            winners.push(winner);
-        }
-    }
-
-    return winners;
+    return generateKnockoutRound(pairings, 2);
 }
 
 /**
@@ -234,48 +132,4 @@ export function createR16Pairings(
     }
 
     return pairings;
-}
-
-/**
- * Top-level fixture generator for any UEFA phase.
- */
-export function generateUEFAFixtures(
-    teamNames: string[],
-    phase: Phase,
-    context: UEFAContext,
-): LeaguePhase | KnockoutRound | Match {
-    phase = phase || "league";
-    context = context || {};
-
-    switch (phase) {
-        case "league": {
-            return generateLeagueFixtures(teamNames);
-        }
-        case "playoffs": {
-            const playOffPairings: Pairing[] = createPlayoffPairings(
-                context.playoffTeams || teamNames,
-            );
-            return generateKnockoutFixtures(playOffPairings);
-        }
-        case "r16": {
-            const r16Pairings: Pairing[] = createR16Pairings(
-                context.top8 || [],
-                context.playoffWinners || [],
-            );
-            return generateKnockoutFixtures(r16Pairings);
-        }
-        case "quarterfinals":
-        case "semifinals": {
-            const qualifiedPairings: Pairing[] = createPlayoffPairings(
-                context.qualifiedTeams || teamNames,
-            );
-            return generateKnockoutFixtures(qualifiedPairings);
-        }
-        case "final": {
-            const finalists = context.finalists || teamNames.slice(0, 2);
-            return generateFinalFixture(finalists[0], finalists[1]);
-        }
-        default:
-            throw new Error(`Unknown UEFA phase: ${phase}`);
-    }
 }
