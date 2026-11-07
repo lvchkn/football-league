@@ -3,7 +3,7 @@ import type { Round } from "./interfaces/round.js";
 
 /**
  * Score inputs follow the id scheme `r{round}_m{match}_hg` / `_ag`
- * in both the domestic and UEFA fixture renderers.
+ * in both the domestic and tournament fixture renderers.
  */
 function _inputs(roundIndex: number, matchIndex: number) {
     const id = `r${roundIndex}_m${matchIndex}`;

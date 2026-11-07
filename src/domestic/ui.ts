@@ -5,7 +5,7 @@ import type {
 } from "../interfaces/match.js";
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
-import { sortTable } from "./table.js";
+import { sortTable } from "../utils/table.js";
 import { createFormCell, createTeamCell } from "../team-detail.js";
 import {
     createMatchdayActions,

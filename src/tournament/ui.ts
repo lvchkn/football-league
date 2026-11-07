@@ -1,8 +1,13 @@
 import type { Match, MatchUpdate } from "../interfaces/match.js";
 import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
-import type { Phase, Stage, UEFAHistoryEntry } from "../interfaces/tournament.js";
-import { sortUEFATable } from "./table.js";
+import type {
+    Phase,
+    Stage,
+    StandingsZone,
+    StageHistoryEntry,
+} from "../interfaces/tournament.js";
+import { sortLeagueStageTable } from "./league-table.js";
 import { groupLookup } from "../utils/groups.js";
 import { createFormCell, createTeamCell } from "../team-detail.js";
 import {
@@ -12,13 +17,14 @@ import {
 } from "../simulation-controls.js";
 
 /**
- * Render the UEFA league table in the #standings element.
+ * Render a league-stage table in the #standings element.
  * Only meaningful during the league phase.
  */
-export function renderUEFATable(
+export function renderLeagueTable(
     table: Table,
     visible: boolean,
     fixtures: LeagueRound[] = [],
+    zones: StandingsZone[] = [],
 ) {
     const standingsSection: HTMLElement | null =
         document.querySelector(".standings-section");
@@ -38,17 +44,13 @@ export function renderUEFATable(
 
     tbody.innerHTML = "";
 
-    const sortedTable: TableRow[] = sortUEFATable(table);
+    const sortedTable: TableRow[] = sortLeagueStageTable(table);
 
     sortedTable.forEach(function (row, i) {
         const tr: HTMLTableRowElement = document.createElement("tr");
 
-        // Colour-code qualifying positions
-        if (i < 8) {
-            tr.style.backgroundColor = "rgba(0,180,80,0.12)"; // top 8 — auto R16
-        } else if (i < 24) {
-            tr.style.backgroundColor = "rgba(255,165,0,0.10)"; // 9-24 — playoffs
-        }
+        const zone = zones.find((z) => i < z.upTo);
+        if (zone) tr.className = zone.status;
 
         const positionCell = document.createElement("td");
         positionCell.textContent = String(i + 1);
@@ -354,10 +356,10 @@ function _renderPenaltyShootout(
 }
 
 /**
- * Render UEFA fixtures for the current phase.
+ * Render fixtures for the current stage.
  * During knockout phases it also shows aggregate scores per tie.
  */
-export function renderUEFAFixtures(
+export function renderStageFixtures(
     fixtures: Round[],
     onResultsApplied: (updates: MatchUpdate[]) => void,
     stage: Stage,
@@ -723,8 +725,8 @@ function _createMatchRow(
 /**
  * Render a selector for completed phases without making historic results live.
  */
-export function renderUEFAHistoryControls(
-    history: UEFAHistoryEntry[],
+export function renderHistoryControls(
+    history: StageHistoryEntry[],
     labelOf: (phase: Phase) => string,
     currentPhase: Phase,
     viewedHistoryPhase: Phase | null,

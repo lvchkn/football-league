@@ -1,31 +1,27 @@
 import type { Match } from "../interfaces/match.js";
 import { describe, it, expect } from "vitest";
-import {
-    initUEFATable,
-    applyUEFAMatchResult,
-    sortUEFATable,
-    getQualifiedTeams,
-} from "./table.js";
+import { sortLeagueStageTable } from "./league-table.js";
+import { applyMatchResult, initTable } from "../utils/table.js";
 
-describe("UEFA Table Logic", () => {
-    describe("initUEFATable", () => {
+describe("League stage table", () => {
+    describe("initTable", () => {
         it("should initialize a table with 0 values for all teams and empty h2h tracking", () => {
-            const table = initUEFATable(["Real Madrid", "Bayern"]);
+            const table = initTable(["Real Madrid", "Bayern"]);
             expect(Object.keys(table)).toHaveLength(2);
             expect(table["Real Madrid"].h2h).toEqual({});
         });
     });
 
-    describe("applyUEFAMatchResult (H2H tracking)", () => {
+    describe("applyMatchResult (H2H tracking)", () => {
         it("should properly track H2H stats between two teams", () => {
-            const table = initUEFATable(["Real Madrid", "Bayern"]);
+            const table = initTable(["Real Madrid", "Bayern"]);
             const match: Match = {
                 homeTeam: "Real Madrid",
                 awayTeam: "Bayern",
                 homeGoals: 2,
                 awayGoals: 1,
             };
-            applyUEFAMatchResult(match, table);
+            applyMatchResult(match, table);
 
             const realMadrid = table["Real Madrid"];
             const bayern = table["Bayern"];
@@ -39,19 +35,19 @@ describe("UEFA Table Logic", () => {
         });
     });
 
-    describe("sortUEFATable", () => {
+    describe("sortLeagueStageTable", () => {
         it("should sort by points first", () => {
-            const table = initUEFATable(["A", "B"]);
+            const table = initTable(["A", "B"]);
             table["A"].points = 3;
             table["B"].points = 1;
 
-            const sorted = sortUEFATable(table);
+            const sorted = sortLeagueStageTable(table);
 
             expect(sorted[0].team).toBe("A");
         });
 
         it("should sort by H2H if points are equal", () => {
-            const table = initUEFATable(["A", "B"]);
+            const table = initTable(["A", "B"]);
             table["A"].points = 3;
             table["B"].points = 3;
 
@@ -73,12 +69,12 @@ describe("UEFA Table Logic", () => {
                 ga: 2,
             };
 
-            const sorted = sortUEFATable(table);
+            const sorted = sortLeagueStageTable(table);
             expect(sorted[0].team).toBe("A");
         });
 
         it("should sort by Overall GD if H2H points are equal", () => {
-            const table = initUEFATable(["A", "B"]);
+            const table = initTable(["A", "B"]);
             table["A"].points = 3;
             table["B"].points = 3;
             table["A"].gf = 5;
@@ -104,20 +100,8 @@ describe("UEFA Table Logic", () => {
                 ga: 1,
             };
 
-            const sorted = sortUEFATable(table);
+            const sorted = sortLeagueStageTable(table);
             expect(sorted[0].team).toBe("B"); // B has better overall GD (5 > 4)
-        });
-    });
-
-    describe("getQualifiedTeams", () => {
-        it("should return top N qualifying teams", () => {
-            const table = initUEFATable(["A", "B", "C"]);
-            table["C"].points = 9;
-            table["A"].points = 6;
-            table["B"].points = 3;
-
-            const qualified = getQualifiedTeams(table, 2);
-            expect(qualified).toEqual(["C", "A"]); // sorted by points
         });
     });
 });

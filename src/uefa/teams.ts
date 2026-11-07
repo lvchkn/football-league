@@ -1,15 +1,9 @@
-import type {
-    Teams,
-    TeamsByCompetition,
-    UEFACompetition,
-} from "../interfaces/tournament.js";
-import { EURO_2024_TEAMS } from "../national/euro2024.js";
-import { WC_2026_TEAMS } from "../national/worldcup2026.js";
+import type { Teams } from "../interfaces/tournament.js";
 
 /**
  * UEFA Competitions: Teams for Swiss Stage (36 teams each)
  */
-const uclTeams: Teams = [
+export const uclTeams: Teams = [
     // Pot 1
     "Paris Saint-Germain",
     "Bayern München",
@@ -55,7 +49,7 @@ const uclTeams: Teams = [
     "Sabah",
 ];
 
-const elTeams: Teams = [
+export const elTeams: Teams = [
     // Pot 1
     "Bayer Leverkusen",
     "Benfica",
@@ -101,7 +95,7 @@ const elTeams: Teams = [
     "Levski Sofia",
 ];
 
-const clTeams: Teams = [
+export const clTeams: Teams = [
     "Atalanta",
     "Braga",
     "Ajax",
@@ -144,18 +138,3 @@ const clTeams: Teams = [
     "Iberia Tbilisi",
     "Egnatia",
 ];
-
-const uefaTeamsByCompetition: TeamsByCompetition = {
-    ucl: uclTeams,
-    el: elTeams,
-    cl: clTeams,
-    euro: EURO_2024_TEAMS,
-    wc: WC_2026_TEAMS,
-};
-
-/**
- * Get teams for a specific UEFA competition
- */
-export function getUEFATeams(competition: UEFACompetition): Teams {
-    return uefaTeamsByCompetition[competition] || [];
-}

@@ -32,10 +32,11 @@ pnpm dev      # start the Vite dev server
 ## Project structure
 
 - `src/app.ts`: entry point; switches between competitions.
+- `src/competitions.ts`: registry of all competitions (names, teams, formats); drives the league dropdown.
 - `src/domestic/`: domestic leagues.
-- `src/uefa/`: tournament app for stage-based competitions, plus UEFA club formats and teams.
+- `src/tournament/`: app, UI and storage for stage-based tournaments (club and national).
+- `src/uefa/`: UEFA club competition formats and teams.
 - `src/national/`: World Cup 2026 and Euro 2024 data and formats.
-- `src/tournament-format.ts`: stage-based format definitions.
-- `src/utils/`: group, knockout, simulation and stats logic.
+- `src/utils/`: standings, group, knockout, simulation and stats logic.
 - `src/team-detail.ts`, `src/simulation-controls.ts`: shared UI.
 - `wrangler.jsonc`: Cloudflare deployment config.

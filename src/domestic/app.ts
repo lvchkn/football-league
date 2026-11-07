@@ -8,8 +8,8 @@ import type {
 } from "../interfaces/tournament.js";
 
 import * as storage from "./storage.js";
-import { applyMatchResult, initTable, removeMatchResult } from "./table.js";
-import { getRosterVersionByLeague, getTeamsByLeague } from "./teams.js";
+import { applyMatchResult, initTable, removeMatchResult } from "../utils/table.js";
+import { getRosterVersion, getTeams } from "../competitions.js";
 import { renderFixtures, renderTable } from "./ui.js";
 import { generateFixtures } from "./fixtures.js";
 import { shuffleArray } from "../utils/shuffle.js";
@@ -53,7 +53,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
      * Load fixtures from storage or generate fresh ones.
      */
     function initializeFixtures(): void {
-        const rosterVersion = getRosterVersionByLeague(league);
+        const rosterVersion = getRosterVersion(league);
         const structure = storage.getFixturesStructure(league, rosterVersion);
 
         if (structure) {
@@ -120,7 +120,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
             storage.setFixturesDebounced(
                 fixtures,
                 league,
-                getRosterVersionByLeague(league),
+                getRosterVersion(league),
             );
         };
 
@@ -142,12 +142,12 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesDebounced(
             fixtures,
             league,
-            getRosterVersionByLeague(league),
+            getRosterVersion(league),
         );
     }
 
     function init(): void {
-        teams = getTeamsByLeague(league);
+        teams = getTeams(league);
         initializeFixtures();
         recalcTable();
         renderAllFixtures();
@@ -159,7 +159,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesStructure(
             fixtures,
             league,
-            getRosterVersionByLeague(league),
+            getRosterVersion(league),
         );
         recalcTable();
         renderAllFixtures();
@@ -169,7 +169,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesImmediate(
             fixtures,
             league,
-            getRosterVersionByLeague(league),
+            getRosterVersion(league),
         );
     }
 
@@ -192,7 +192,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
         storage.setFixturesImmediate(
             fixtures,
             league,
-            getRosterVersionByLeague(league),
+            getRosterVersion(league),
         );
     }
 

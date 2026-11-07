@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { KnockoutMatch } from "../interfaces/match.js";
 import type { Round } from "../interfaces/round.js";
-import type { KnockoutStage, Teams, UEFAContext } from "../interfaces/tournament.js";
-import { generateStageFixtures, getNextStage, getPhaseLabel, getStage } from "../tournament-format.js";
+import type { KnockoutStage, Teams, StageContext } from "../interfaces/tournament.js";
+import { generateStageFixtures, getNextStage, getPhaseLabel, getStage } from "../tournament/format.js";
 import { countTies, getKnockoutWinners } from "../utils/knockout.js";
 import { equalRatings, simulateKnockoutRound, simulateLeagueRounds, type Rng } from "../utils/simulation.js";
 import { UEFA_FORMAT } from "./format.js";
-import { applyUEFAMatchResult, initUEFATable, sortUEFATable } from "./table.js";
+import { sortLeagueStageTable } from "../tournament/league-table.js";
+import { applyMatchResult, initTable } from "../utils/table.js";
 
 function seeded(seed: number): Rng {
     let a = seed;
@@ -34,7 +35,7 @@ describe("UEFA_FORMAT", () => {
     it("plays out a full competition from league phase to a single champion", () => {
         const rng = seeded(42);
         let stage = UEFA_FORMAT.stages[0]!;
-        let context: UEFAContext = {};
+        let context: StageContext = {};
         let fixtures: Round[] = generateStageFixtures(stage, teams, context);
         const tiesPerStage: Record<string, number> = {};
         let champion: string | undefined;
@@ -44,9 +45,9 @@ describe("UEFA_FORMAT", () => {
 
             if (stage.kind === "league") {
                 simulateLeagueRounds(fixtures, fixtures.map((_, i) => i), equalRatings, rng);
-                const table = initUEFATable(teams);
-                fixtures.forEach((r) => r.matches.forEach((m) => applyUEFAMatchResult(m, table)));
-                qualified = sortUEFATable(table).map((row) => row.team);
+                const table = initTable(teams);
+                fixtures.forEach((r) => r.matches.forEach((m) => applyMatchResult(m, table)));
+                qualified = sortLeagueStageTable(table).map((row) => row.team);
             } else if (stage.kind === "knockout") {
                 const round = fixtures[0]!;
                 simulateKnockoutRound(round.matches, stage.legs, equalRatings, rng);

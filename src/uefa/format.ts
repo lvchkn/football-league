@@ -20,6 +20,11 @@ export const UEFA_FORMAT: TournamentFormat = {
             phase: "league",
             label: "League Phase",
             generate: generateLeagueFixtures,
+            // 1-8 go straight to the round of 16, 9-24 enter the playoffs
+            zones: [
+                { upTo: 8, status: "qualified" },
+                { upTo: 24, status: "contention" },
+            ],
             advance: (standings) => ({
                 top8: standings.slice(0, 8),
                 playoffTeams: standings.slice(8, 24),

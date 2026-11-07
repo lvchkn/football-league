@@ -1,18 +1,6 @@
-import type { League, LeagueList, Teams } from "../interfaces/tournament.js";
-import { computeRosterVersion } from "../utils/roster-version.js";
+import type { League } from "../interfaces/tournament.js";
 
-export function getRosterVersionByLeague(
-    league: LeagueList | string,
-): string | null {
-    if (!league) return null;
-
-    const teams = getTeamsByLeague(league as LeagueList);
-    if (!teams.length) return null;
-
-    return computeRosterVersion(teams);
-}
-
-const englishLeague: League = {
+export const englishLeague: League = {
     key: "english",
     name: "English Premier League",
     teams: [
@@ -39,7 +27,7 @@ const englishLeague: League = {
     ],
 };
 
-const frenchLeague: League = {
+export const frenchLeague: League = {
     key: "french",
     name: "French Ligue 1",
     teams: [
@@ -64,7 +52,7 @@ const frenchLeague: League = {
     ],
 };
 
-const germanLeague: League = {
+export const germanLeague: League = {
     key: "german",
     name: "German Bundesliga",
     teams: [
@@ -89,7 +77,7 @@ const germanLeague: League = {
     ],
 };
 
-const italianLeague: League = {
+export const italianLeague: League = {
     key: "italian",
     name: "Italian Serie A",
     teams: [
@@ -116,7 +104,7 @@ const italianLeague: League = {
     ],
 };
 
-const spanishLeague: League = {
+export const spanishLeague: League = {
     key: "spanish",
     name: "Spanish La Liga",
     teams: [
@@ -143,7 +131,7 @@ const spanishLeague: League = {
     ],
 };
 
-const dutchLeague: League = {
+export const dutchLeague: League = {
     key: "dutch",
     name: "Dutch Eredivisie",
     teams: [
@@ -168,7 +156,7 @@ const dutchLeague: League = {
     ],
 };
 
-const belgianLeague: League = {
+export const belgianLeague: League = {
     key: "belgian",
     name: "Belgian Pro League",
     teams: [
@@ -191,7 +179,7 @@ const belgianLeague: League = {
     ],
 };
 
-const serbianLeague: League = {
+export const serbianLeague: League = {
     key: "serbian",
     name: "Serbian SuperLiga",
     teams: [
@@ -212,7 +200,7 @@ const serbianLeague: League = {
     ],
 };
 
-const russianLeague: League = {
+export const russianLeague: League = {
     key: "russian",
     name: "Russian Premier League",
     teams: [
@@ -235,7 +223,7 @@ const russianLeague: League = {
     ],
 };
 
-const greekLeague: League = {
+export const greekLeague: League = {
     key: "greek",
     name: "Greek Super League",
     teams: [
@@ -256,7 +244,7 @@ const greekLeague: League = {
     ],
 };
 
-const turkishLeague: League = {
+export const turkishLeague: League = {
     key: "turkish",
     name: "Turkish Süper Lig",
     teams: [
@@ -281,7 +269,7 @@ const turkishLeague: League = {
     ],
 };
 
-const championship: League = {
+export const championship: League = {
     key: "english-2",
     name: "English Championship",
     teams: [
@@ -312,7 +300,7 @@ const championship: League = {
     ],
 };
 
-const serieB: League = {
+export const serieB: League = {
     key: "italian-2",
     name: "Italian Serie B",
     teams: [
@@ -339,7 +327,7 @@ const serieB: League = {
     ],
 };
 
-const segunda: League = {
+export const segunda: League = {
     key: "spanish-2",
     name: "Spanish Segunda División",
     teams: [
@@ -368,7 +356,7 @@ const segunda: League = {
     ],
 };
 
-const bundesliga2: League = {
+export const bundesliga2: League = {
     key: "german-2",
     name: "German Bundesliga 2",
     teams: [
@@ -393,7 +381,7 @@ const bundesliga2: League = {
     ],
 };
 
-const ligue2: League = {
+export const ligue2: League = {
     key: "french-2",
     name: "French Ligue 2",
     teams: [
@@ -417,45 +405,3 @@ const ligue2: League = {
         "Dijon",
     ],
 };
-
-/**
- * Get teams by league name.
- */
-export function getTeamsByLeague(league: LeagueList): Teams {
-    switch (league) {
-        case englishLeague.key:
-            return englishLeague.teams;
-        case frenchLeague.key:
-            return frenchLeague.teams;
-        case germanLeague.key:
-            return germanLeague.teams;
-        case italianLeague.key:
-            return italianLeague.teams;
-        case spanishLeague.key:
-            return spanishLeague.teams;
-        case russianLeague.key:
-            return russianLeague.teams;
-        case dutchLeague.key:
-            return dutchLeague.teams;
-        case belgianLeague.key:
-            return belgianLeague.teams;
-        case serbianLeague.key:
-            return serbianLeague.teams;
-        case greekLeague.key:
-            return greekLeague.teams;
-        case turkishLeague.key:
-            return turkishLeague.teams;
-        case championship.key:
-            return championship.teams;
-        case serieB.key:
-            return serieB.teams;
-        case segunda.key:
-            return segunda.teams;
-        case bundesliga2.key:
-            return bundesliga2.teams;
-        case ligue2.key:
-            return ligue2.teams;
-        default:
-            return [];
-    }
-}
