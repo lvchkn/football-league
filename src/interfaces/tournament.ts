@@ -1,4 +1,6 @@
-import type { Round } from "./round.js";
+import type { Pairing } from "./match.js";
+import type { LeaguePhase, Round } from "./round.js";
+import type { Legs } from "../utils/knockout.js";
 
 export type Phase =
     | "league"
@@ -43,6 +45,41 @@ export interface UEFAContext {
     playoffWinners?: string[];
     qualifiedTeams?: string[];
     finalists?: string[];
+}
+
+/**
+ * A round-robin stage whose final standings decide who advances.
+ */
+export interface LeagueStage {
+    kind: "league";
+    phase: Phase;
+    label: string;
+    generate(teams: Teams): LeaguePhase;
+    /** Build the context for the next stage from the final standings (best first). */
+    advance(standings: Teams, context: UEFAContext): UEFAContext;
+}
+
+/**
+ * A knockout stage played over one or two legs per tie.
+ */
+export interface KnockoutStage {
+    kind: "knockout";
+    phase: Phase;
+    label: string;
+    legs: Legs;
+    pairings(context: UEFAContext): Pairing[];
+    /** Build the context for the next stage; omitted on the last stage. */
+    advance?(winners: Teams, context: UEFAContext): UEFAContext;
+}
+
+export type Stage = LeagueStage | KnockoutStage;
+
+/**
+ * Ordered stages of a competition. The winner of the last stage's
+ * only tie is the champion.
+ */
+export interface TournamentFormat {
+    stages: Stage[];
 }
 
 /**

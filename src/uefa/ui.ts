@@ -1,7 +1,7 @@
 import type { Match, MatchUpdate } from "../interfaces/match.js";
 import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
-import type { Phase, UEFAHistoryEntry } from "../interfaces/tournament.js";
+import type { Phase, Stage, UEFAHistoryEntry } from "../interfaces/tournament.js";
 import { sortUEFATable } from "./table.js";
 import { createFormCell, createTeamCell } from "../team-detail.js";
 import {
@@ -11,25 +11,12 @@ import {
 } from "../simulation-controls.js";
 
 /**
- * Human-readable label for each UEFA phase.
- */
-const PHASE_LABELS: Record<Phase, string> = {
-    league: "League Phase",
-    playoffs: "Knockout Playoffs",
-    r16: "Round of 16",
-    quarterfinals: "Quarter-finals",
-    semifinals: "Semi-finals",
-    final: "Final",
-    finished: "Finished",
-};
-
-/**
  * Render the UEFA league table in the #standings element.
  * Only meaningful during the league phase.
  */
 export function renderUEFATable(
     table: Table,
-    phase: Phase,
+    visible: boolean,
     fixtures: LeagueRound[] = [],
 ) {
     const standingsSection: HTMLElement | null =
@@ -40,8 +27,8 @@ export function renderUEFATable(
 
     if (!tbody) return;
 
-    // During knockout phases, hide the league table and show a summary instead
-    if (phase !== "league") {
+    // Knockout stages have no table
+    if (!visible) {
         if (standingsSection) standingsSection.style.display = "none";
         return;
     }
@@ -245,11 +232,11 @@ function _renderPenaltyShootout(
 export function renderUEFAFixtures(
     fixtures: Round[],
     onResultsApplied: (updates: MatchUpdate[]) => void,
-    phase: Phase,
+    stage: Stage,
+    bannerText: string,
     readOnly = false,
     onSimulate?: (roundIndices: number[]) => void,
 ) {
-    phase = phase || "league";
     const container: HTMLElement | null = document.getElementById("fixtures");
     if (!container) return;
 
@@ -258,9 +245,7 @@ export function renderUEFAFixtures(
     const banner: HTMLDivElement = document.createElement("div");
     banner.className = "phase-indicator";
     const strong = document.createElement("strong");
-    strong.textContent =
-        (readOnly ? "Viewing completed phase: " : "Current Phase: ") +
-        (PHASE_LABELS[phase] || phase);
+    strong.textContent = bannerText;
     banner.appendChild(strong);
     container.appendChild(banner);
 
@@ -270,12 +255,12 @@ export function renderUEFAFixtures(
         );
     }
 
-    const isKnockout: boolean = phase !== "league";
+    const isTwoLegKnockout = stage.kind === "knockout" && stage.legs === 2;
 
-    // For knockout phases, wrap the callback so aggregate displays refresh
+    // For two-leg ties, wrap the callback so aggregate displays refresh
     let wrappedOnResultsApplied = onResultsApplied;
 
-    if (isKnockout && phase !== "final" && phase !== "finished") {
+    if (isTwoLegKnockout) {
         wrappedOnResultsApplied = function (updates: MatchUpdate[]) {
             onResultsApplied(updates);
             _refreshAllAggregates(container, fixtures);
@@ -286,19 +271,22 @@ export function renderUEFAFixtures(
         const div: HTMLDivElement = document.createElement("div");
         div.className = "matchday";
 
-        let roundLabel: string;
-
-        if (phase === "league") {
-            roundLabel = "Matchday " + (i + 1);
-        } else {
-            roundLabel = PHASE_LABELS[phase] || "Round " + (i + 1);
-        }
+        const roundLabel: string =
+            stage.kind === "league" ? "Matchday " + (i + 1) : stage.label;
 
         const h3 = document.createElement("h3");
         h3.textContent = roundLabel;
         div.appendChild(h3);
 
-        if (isKnockout && phase !== "final" && phase !== "finished") {
+        if (stage.kind === "league") {
+            _renderLeagueRound(
+                div,
+                round as LeagueRound,
+                i,
+                wrappedOnResultsApplied,
+                readOnly,
+            );
+        } else if (stage.legs === 2) {
             _renderKnockoutRound(
                 div,
                 round as KnockoutRound,
@@ -307,25 +295,10 @@ export function renderUEFAFixtures(
                 readOnly,
             );
         } else {
-            _renderLeagueRound(
+            _renderSingleLegRound(
                 div,
-                round as LeagueRound,
+                round,
                 i,
-                wrappedOnResultsApplied,
-                readOnly,
-            );
-        }
-
-        if (
-            (phase === "final" || phase === "finished") &&
-            round.matches[0] &&
-            _hasCompletedScore(round.matches[0]) &&
-            round.matches[0].homeGoals === round.matches[0].awayGoals
-        ) {
-            _renderPenaltyShootout(
-                div,
-                round.matches[0],
-                "r" + i + "_final",
                 wrappedOnResultsApplied,
                 readOnly,
             );
@@ -378,7 +351,7 @@ export function renderUEFAFixtures(
 
             // Knockout phases are a single round, covered by the top bar
             const actionButtons =
-                phase === "league" && onSimulate
+                stage.kind === "league" && onSimulate
                     ? [createSimulateRoundButton(() => onSimulate([i])), applyAllResultsButton]
                     : [applyAllResultsButton];
 
@@ -410,6 +383,33 @@ function _renderLeagueRound(
         );
 
         container.appendChild(matchRow);
+    });
+}
+
+/**
+ * Render single-match ties; a drawn match gets a penalty shootout below it.
+ */
+function _renderSingleLegRound(
+    container: HTMLDivElement,
+    round: Round,
+    roundIdx: number,
+    onResultsApplied: (updates: MatchUpdate[]) => void,
+    readOnly: boolean,
+): void {
+    round.matches.forEach(function (match: Match, idx: number) {
+        container.appendChild(
+            _createMatchRow(match, roundIdx, idx, onResultsApplied, null, readOnly),
+        );
+
+        if (_hasCompletedScore(match) && match.homeGoals === match.awayGoals) {
+            _renderPenaltyShootout(
+                container,
+                match,
+                "r" + roundIdx + "_m" + idx,
+                onResultsApplied,
+                readOnly,
+            );
+        }
     });
 }
 
@@ -591,6 +591,7 @@ function _createMatchRow(
  */
 export function renderUEFAHistoryControls(
     history: UEFAHistoryEntry[],
+    labelOf: (phase: Phase) => string,
     currentPhase: Phase,
     viewedHistoryPhase: Phase | null,
     onHistorySelect: (phase: Phase) => void,
@@ -614,13 +615,13 @@ export function renderUEFAHistoryControls(
     const currentOption = document.createElement("option");
     currentOption.value = "current";
     currentOption.textContent =
-        "Current: " + (PHASE_LABELS[currentPhase] || currentPhase);
+        "Current: " + labelOf(currentPhase);
     selector.appendChild(currentOption);
 
     history.forEach(function (entry) {
         const option = document.createElement("option");
         option.value = entry.phase;
-        option.textContent = PHASE_LABELS[entry.phase] || entry.phase;
+        option.textContent = labelOf(entry.phase);
         selector.appendChild(option);
     });
 

@@ -218,6 +218,19 @@ export function simulateSingleMatchTie(
 }
 
 /**
+ * Fill a knockout round of one- or two-leg ties, settling draws on penalties.
+ */
+export function simulateKnockoutRound(
+    matches: Match[],
+    legs: 1 | 2,
+    ratingOf: RatingOf,
+    rng: Rng = Math.random,
+): MatchUpdate[] {
+    if (legs === 2) return simulateTwoLegTies(matches, ratingOf, rng);
+    return matches.flatMap((match) => simulateSingleMatchTie(match, ratingOf, rng));
+}
+
+/**
  * Indices of rounds that still contain at least one unplayed match.
  */
 export function getUnplayedRoundIndices(rounds: Round[]): number[] {
