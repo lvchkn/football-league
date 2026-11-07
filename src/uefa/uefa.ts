@@ -55,7 +55,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                     applyUEFAMatchResult(match, table);
                 }),
             );
-            renderUEFATable(table, currentUEFAPhase);
+            renderUEFATable(table, currentUEFAPhase, fixtures as LeaguePhase);
         } else {
             renderUEFATable({}, currentUEFAPhase);
         }
@@ -70,7 +70,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                 removeUEFAMatchResult(update.oldMatch, table);
                 applyUEFAMatchResult(update.match, table);
             });
-            renderUEFATable(table, currentUEFAPhase);
+            renderUEFATable(table, currentUEFAPhase, fixtures as LeaguePhase);
         }
     }
 

@@ -33,7 +33,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
                 applyMatchResult(match, table);
             }),
         );
-        renderTable(table);
+        renderTable(table, fixtures);
     }
 
     /**
@@ -44,7 +44,7 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
             removeMatchResult(update.oldMatch, table);
             applyMatchResult(update.match, table);
         });
-        renderTable(table);
+        renderTable(table, fixtures);
     }
 
     /**

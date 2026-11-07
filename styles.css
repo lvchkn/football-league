@@ -125,6 +125,127 @@ table {
     width: 50px;
 }
 
+#standings th:nth-child(n + 4),
+#standings td:nth-child(n + 4) {
+    width: 38px;
+}
+
+#standings th:nth-child(11),
+#standings td:nth-child(11) {
+    width: 86px;
+}
+
+/* Form badges (W/D/L) */
+.form-cell {
+    white-space: nowrap;
+}
+
+.form-badge {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    line-height: 15px;
+    margin: 0 1px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    cursor: default;
+}
+
+.form-W {
+    background-color: #16a34a;
+}
+
+.form-D {
+    background-color: #94a3b8;
+}
+
+.form-L {
+    background-color: #dc2626;
+}
+
+/* Team name rendered as a link-style button in the standings */
+button.team-link {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    color: #1d4ed8;
+    font: inherit;
+    text-align: inherit;
+    overflow-wrap: anywhere;
+}
+
+button.team-link:hover {
+    background: none;
+    box-shadow: none;
+    transform: none;
+    text-decoration: underline;
+}
+
+/* Team detail modal */
+.team-detail {
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    color: #334155;
+    background-color: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.team-detail::backdrop {
+    background-color: rgba(15, 23, 42, 0.45);
+}
+
+.team-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.team-detail-header h2 {
+    margin: 0;
+}
+
+button.team-detail-close {
+    background: none;
+    color: #475569;
+    box-shadow: none;
+    font-size: 24px;
+    line-height: 1;
+    padding: 2px 8px;
+}
+
+button.team-detail-close:hover {
+    background-color: #f1f5f9;
+    box-shadow: none;
+    transform: none;
+}
+
+.team-detail section h3 {
+    margin: 20px 0 8px;
+}
+
+.team-detail table {
+    max-width: none;
+    table-layout: auto;
+}
+
+.team-detail table:not(#standings) th,
+.team-detail table:not(#standings) td {
+    font-size: 13px;
+    padding: 6px;
+}
+
+.team-detail-empty {
+    color: #64748b;
+}
+
 /* Scope general table cell styles to tables other than #standings */
 table:not(#standings) th,
 table:not(#standings) td {
@@ -284,6 +405,18 @@ table:not(#standings) tbody tr:hover {
     #standings th:nth-child(n + 3),
     #standings td:nth-child(n + 3) {
         width: 40px;
+    }
+
+    #standings th:nth-child(11),
+    #standings td:nth-child(11) {
+        width: 80px;
+    }
+
+    .form-badge {
+        width: 14px;
+        height: 14px;
+        line-height: 14px;
+        font-size: 9px;
     }
 
     .matchday {

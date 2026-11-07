@@ -3,6 +3,7 @@ import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
 import type { Phase, UEFAHistoryEntry } from "../interfaces/tournament.js";
 import { sortUEFATable } from "./table.js";
+import { createFormCell, createTeamCell } from "../team-detail.js";
 
 /**
  * Human-readable label for each UEFA phase.
@@ -21,7 +22,11 @@ const PHASE_LABELS: Record<Phase, string> = {
  * Render the UEFA league table in the #standings element.
  * Only meaningful during the league phase.
  */
-export function renderUEFATable(table: Table, phase: Phase) {
+export function renderUEFATable(
+    table: Table,
+    phase: Phase,
+    fixtures: LeagueRound[] = [],
+) {
     const standingsSection: HTMLElement | null =
         document.querySelector(".standings-section");
 
@@ -54,9 +59,11 @@ export function renderUEFATable(table: Table, phase: Phase) {
             tr.style.backgroundColor = "rgba(255,165,0,0.10)"; // 9-24 — playoffs
         }
 
+        const positionCell = document.createElement("td");
+        positionCell.textContent = String(i + 1);
+        tr.append(positionCell, createTeamCell(fixtures, row.team));
+
         const cells = [
-            i + 1,
-            row.team,
             row.played,
             row.wins,
             row.draws,
@@ -72,6 +79,8 @@ export function renderUEFATable(table: Table, phase: Phase) {
             td.textContent = String(value);
             tr.appendChild(td);
         });
+
+        tr.appendChild(createFormCell(fixtures, row.team));
 
         tbody.appendChild(tr);
     });

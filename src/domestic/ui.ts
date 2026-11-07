@@ -6,11 +6,12 @@ import type {
 import type { LeaguePhase, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
 import { sortTable } from "./table.js";
+import { createFormCell, createTeamCell } from "../team-detail.js";
 
 /**
  * Render the league table in the HTML
  */
-export function renderTable(table: Table): void {
+export function renderTable(table: Table, fixtures: LeaguePhase): void {
     const tbody: HTMLElement | null =
         document.querySelector("#standings tbody");
 
@@ -23,9 +24,11 @@ export function renderTable(table: Table): void {
     sortedTableRows.forEach((row, i) => {
         const tr: HTMLTableRowElement = document.createElement("tr");
 
+        const positionCell = document.createElement("td");
+        positionCell.textContent = String(i + 1);
+        tr.append(positionCell, createTeamCell(fixtures, row.team));
+
         const cells = [
-            i + 1,
-            row.team,
             row.played,
             row.wins,
             row.draws,
@@ -41,6 +44,8 @@ export function renderTable(table: Table): void {
             td.textContent = String(value);
             tr.appendChild(td);
         });
+
+        tr.appendChild(createFormCell(fixtures, row.team));
 
         tbody.appendChild(tr);
     });
