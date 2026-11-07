@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { KnockoutMatch } from "../interfaces/match.js";
 import type { Round } from "../interfaces/round.js";
-import type { Teams, UEFAContext } from "../interfaces/tournament.js";
+import type { KnockoutStage, Teams, UEFAContext } from "../interfaces/tournament.js";
 import { generateStageFixtures, getNextStage, getPhaseLabel, getStage } from "../tournament-format.js";
 import { countTies, getKnockoutWinners } from "../utils/knockout.js";
 import { equalRatings, simulateKnockoutRound, simulateLeagueRounds, type Rng } from "../utils/simulation.js";
@@ -47,12 +47,14 @@ describe("UEFA_FORMAT", () => {
                 const table = initUEFATable(teams);
                 fixtures.forEach((r) => r.matches.forEach((m) => applyUEFAMatchResult(m, table)));
                 qualified = sortUEFATable(table).map((row) => row.team);
-            } else {
+            } else if (stage.kind === "knockout") {
                 const round = fixtures[0]!;
                 simulateKnockoutRound(round.matches, stage.legs, equalRatings, rng);
                 tiesPerStage[stage.phase] = countTies(round, stage.legs);
                 qualified = getKnockoutWinners(round, stage.legs);
                 expect(qualified).toHaveLength(tiesPerStage[stage.phase]!);
+            } else {
+                throw new Error("UEFA format has no group stage");
             }
 
             const next = getNextStage(UEFA_FORMAT, stage.phase);
@@ -64,7 +66,7 @@ describe("UEFA_FORMAT", () => {
             context =
                 stage.kind === "league"
                     ? stage.advance(qualified, context)
-                    : stage.advance!(qualified, context);
+                    : (stage as KnockoutStage).advance!(qualified, context);
 
             if (stage.phase === "league") {
                 expect(context.top8).toEqual(qualified.slice(0, 8));

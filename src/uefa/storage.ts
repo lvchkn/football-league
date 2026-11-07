@@ -23,6 +23,7 @@ const PHASE_KEY_PREFIX = "football-league:uefa:phase:";
 const PHASE_CONTEXT_KEY_PREFIX = "football-league:uefa:phase-context:";
 const QUALIFIED_KEY_PREFIX = "football-league:uefa:qualified-teams:";
 const HISTORY_KEY_PREFIX = "football-league:uefa:history:";
+const GROUPS_KEY_PREFIX = "football-league:uefa:groups:";
 const DEBOUNCE_MS = 300;
 
 const pendingSaves = new Map<string, ReturnType<typeof setTimeout>>();
@@ -56,6 +57,9 @@ function _qualifiedKey(competition: UEFACompetition): string {
 }
 function _historyKey(competition: UEFACompetition): string {
     return HISTORY_KEY_PREFIX + (competition || "ucl");
+}
+function _groupsKey(competition: UEFACompetition): string {
+    return GROUPS_KEY_PREFIX + (competition || "ucl");
 }
 
 function _extractMinimal(fixtures: Round[]): Match[][] {
@@ -112,6 +116,7 @@ function _clearPersistedFixtures(competition: UEFACompetition): void {
         localStorage.removeItem(_phaseContextKey(competition));
         localStorage.removeItem(_qualifiedKey(competition));
         localStorage.removeItem(_historyKey(competition));
+        localStorage.removeItem(_groupsKey(competition));
     } catch {
         return;
     }
@@ -384,6 +389,31 @@ export function archivePhase(
             competition,
             _getExpectedVersion(competition, rosterVersion),
         );
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * The group draw in use, when it differs from the format's default draw.
+ * Returned unvalidated; callers check it against the format.
+ */
+export function getGroups(competition: UEFACompetition): unknown {
+    try {
+        const raw = localStorage.getItem(_groupsKey(competition));
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+export function setGroups(
+    competition: UEFACompetition,
+    groups: Record<string, Teams>,
+): boolean {
+    try {
+        localStorage.setItem(_groupsKey(competition), JSON.stringify(groups));
         return true;
     } catch {
         return false;

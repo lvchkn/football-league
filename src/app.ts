@@ -20,7 +20,7 @@ let activeApp: CompetitionApp;
  * Check if a league is a UEFA competition
  */
 function isUEFACompetition(league: string): boolean {
-    return ["ucl", "el", "cl"].includes(league);
+    return ["ucl", "el", "cl", "euro"].includes(league);
 }
 
 /**

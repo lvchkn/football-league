@@ -11,13 +11,14 @@ import type {
 } from "../interfaces/tournament.js";
 
 import * as uefaStorage from "./storage.js";
-import { UEFA_FORMAT } from "./format.js";
 import { getUEFATeams } from "./teams.js";
 import {
     renderPhaseProgressionButtons,
     renderUEFAFixtures,
     renderUEFAHistoryControls,
     renderUEFATable,
+    renderGroupTables,
+    resetStandingsView,
 } from "./ui.js";
 import {
     initUEFATable,
@@ -29,6 +30,8 @@ import { computeRosterVersion } from "../utils/roster-version.js";
 import { countTies, getKnockoutWinners } from "../utils/knockout.js";
 import {
     generateStageFixtures,
+    getFormat,
+    withGroups,
     getNextStage,
     getPhaseLabel,
     getStage,
@@ -40,6 +43,12 @@ import {
     simulateLeagueRounds,
 } from "../utils/simulation.js";
 import { collectTypedResults, syncScoreInputs } from "../simulation-controls.js";
+import {
+    computeGroupTables,
+    drawGroups,
+    isValidDraw,
+    rankThirdPlaced,
+} from "../utils/groups.js";
 
 function getUefaRosterVersion(competition: UEFACompetition): string | null {
     return computeRosterVersion(getUEFATeams(competition));
@@ -49,7 +58,8 @@ function getUefaRosterVersion(competition: UEFACompetition): string | null {
  * Create a UEFA competition app for the given competition.
  */
 export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
-    const format = UEFA_FORMAT;
+    const baseFormat = getFormat(selectedComp);
+    let format = baseFormat;
     let fixtures: Round[] = [];
     let table: Table = {};
     const competition: UEFACompetition = selectedComp;
@@ -58,15 +68,30 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
     let history: UEFAHistoryEntry[] = [];
     let viewedHistoryPhase: Phase | null = null;
 
-    function isLeagueStage(): boolean {
-        return getStage(format, currentUEFAPhase)?.kind === "league";
+    function currentStageKind() {
+        return getStage(format, currentUEFAPhase)?.kind;
+    }
+
+    function renderGroupStandings(): void {
+        const stage = getStage(format, currentUEFAPhase);
+        if (stage?.kind !== "groups") return;
+
+        const tables = computeGroupTables(stage.groups, fixtures);
+        renderGroupTables(
+            tables,
+            rankThirdPlaced(tables),
+            stage.qualifyingThirds,
+            fixtures,
+        );
     }
 
     /**
-     * Recalculate the UEFA league table from fixtures.
+     * Recalculate the standings (league table or group tables) from fixtures.
      */
     function recalcTable(): void {
-        if (isLeagueStage()) {
+        if (currentStageKind() === "groups") {
+            renderGroupStandings();
+        } else if (currentStageKind() === "league") {
             table = initUEFATable(teams);
             (fixtures as LeaguePhase).forEach((round: Round) =>
                 round.matches.forEach(function (match: Match) {
@@ -83,7 +108,10 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
      * Update the UEFA standings table incrementally.
      */
     function updateTableIncrementally(updates: MatchUpdate[]): void {
-        if (isLeagueStage()) {
+        if (currentStageKind() === "groups") {
+            // Four-team groups are cheap to rebuild from scratch
+            renderGroupStandings();
+        } else if (currentStageKind() === "league") {
             updates.forEach((update) => {
                 removeUEFAMatchResult(update.oldMatch, table);
                 applyUEFAMatchResult(update.match, table);
@@ -97,11 +125,18 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
      */
     function initializeFixtures(): void {
         const rosterVersion = getUefaRosterVersion(competition);
-        currentUEFAPhase = uefaStorage.getPhase(competition) || "league";
-        const structure = uefaStorage.getFixturesStructure(
+        currentUEFAPhase =
+            uefaStorage.getPhase(competition) || format.stages[0]!.phase;
+        let structure = uefaStorage.getFixturesStructure(
             competition,
             rosterVersion,
         );
+
+        // A stored phase this format doesn't know means stale data: start over
+        if (!getStage(format, currentUEFAPhase)) {
+            uefaStorage.clearAll(competition);
+            structure = null;
+        }
 
         if (structure) {
             fixtures = structure.map(function (round: any[]) {
@@ -211,7 +246,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
                 competition,
                 getUefaRosterVersion(competition),
             );
-            if (!isLeagueStage()) {
+            if (currentStageKind() === "knockout") {
                 renderAllFixtures();
             }
         };
@@ -266,7 +301,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         const typed = collectTypedResults(rounds, roundIndices);
 
         const simulated: MatchUpdate[] =
-            stage.kind === "league"
+            stage.kind !== "knockout"
                 ? simulateLeagueRounds(rounds, roundIndices, ratingOf)
                 : simulateKnockoutRound(
                       rounds[0]?.matches ?? [],
@@ -284,7 +319,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
             getUefaRosterVersion(competition),
         );
 
-        if (stage.kind === "league") {
+        if (stage.kind !== "knockout") {
             syncScoreInputs(rounds, roundIndices);
         } else {
             // Re-render to show aggregates and penalty shootouts
@@ -324,11 +359,11 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         }
 
         // Teams that came through this stage, best first
-        let qualified: Teams;
+        let qualified: Teams = [];
 
         if (stage.kind === "league") {
             qualified = sortUEFATable(table).map((row: TableRow) => row.team);
-        } else {
+        } else if (stage.kind === "knockout") {
             const round = rounds[0] ?? { matches: [] };
             const ties = countTies(round, stage.legs);
             qualified = getKnockoutWinners(round, stage.legs);
@@ -364,10 +399,17 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
 
         const context: UEFAContext =
             uefaStorage.getPhaseContext(competition) || {};
-        const nextContext: UEFAContext =
-            stage.kind === "league"
-                ? stage.advance(qualified, context)
-                : (stage.advance?.(qualified, context) ?? {});
+        let nextContext: UEFAContext;
+        if (stage.kind === "groups") {
+            nextContext = stage.advance(
+                computeGroupTables(stage.groups, rounds),
+                context,
+            );
+        } else if (stage.kind === "league") {
+            nextContext = stage.advance(qualified, context);
+        } else {
+            nextContext = stage.advance?.(qualified, context) ?? {};
+        }
 
         uefaStorage.setPhaseContext(competition, nextContext);
 
@@ -392,8 +434,42 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
         window.scrollTo(0, 0);
     }
 
+    /**
+     * Use the saved group draw, if any; otherwise the format's own draw.
+     */
+    function applySavedDraw(): void {
+        format = baseFormat;
+        const groupStage = baseFormat.stages.find((s) => s.kind === "groups");
+        if (!groupStage || groupStage.kind !== "groups") return;
+
+        const saved = uefaStorage.getGroups(competition);
+        if (isValidDraw(saved, Object.keys(groupStage.groups), teams)) {
+            format = withGroups(baseFormat, saved);
+        }
+    }
+
+    /**
+     * Draw new groups from the seeding pots, if this format has them.
+     */
+    function redrawGroups(): void {
+        format = baseFormat;
+        const groupStage = baseFormat.stages.find((s) => s.kind === "groups");
+        if (!groupStage || groupStage.kind !== "groups" || !groupStage.pots) {
+            return;
+        }
+
+        const groups = drawGroups(
+            groupStage.pots,
+            Object.keys(groupStage.groups).sort(),
+            groupStage.fixedDraw ?? [],
+        );
+        uefaStorage.setGroups(competition, groups);
+        format = withGroups(baseFormat, groups);
+    }
+
     function init(): void {
         teams = getUEFATeams(competition);
+        applySavedDraw();
         initializeFixtures();
         recalcTable();
         renderAllFixtures();
@@ -401,6 +477,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
 
     function regenerate(): void {
         uefaStorage.clearAll(competition);
+        redrawGroups();
 
         currentUEFAPhase = format.stages[0]!.phase;
         history = [];
@@ -463,6 +540,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
 
     function destroy(): void {
         uefaStorage.cancelPendingSave(competition);
+        resetStandingsView();
         table = {};
         fixtures = [];
         teams = [];

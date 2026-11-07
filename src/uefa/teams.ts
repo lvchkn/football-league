@@ -3,6 +3,7 @@ import type {
     TeamsByCompetition,
     UEFACompetition,
 } from "../interfaces/tournament.js";
+import { EURO_2024_TEAMS } from "../national/euro2024.js";
 
 /**
  * UEFA Competitions: Teams for Swiss Stage (36 teams each)
@@ -147,6 +148,7 @@ const uefaTeamsByCompetition: TeamsByCompetition = {
     ucl: uclTeams,
     el: elTeams,
     cl: clTeams,
+    euro: EURO_2024_TEAMS,
 };
 
 /**

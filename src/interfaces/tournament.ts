@@ -1,8 +1,10 @@
 import type { Pairing } from "./match.js";
 import type { LeaguePhase, Round } from "./round.js";
+import type { TableRow } from "./table.js";
 import type { Legs } from "../utils/knockout.js";
 
 export type Phase =
+    | "groups"
     | "league"
     | "playoffs"
     | "r16"
@@ -29,7 +31,8 @@ export type LeagueList =
     | "greek"
     | "turkish";
 
-export type UEFACompetition = "ucl" | "el" | "cl";
+/** Competitions run by the stage-based tournament app (club and national). */
+export type UEFACompetition = "ucl" | "el" | "cl" | "euro";
 
 export type Teams = string[];
 
@@ -72,7 +75,26 @@ export interface KnockoutStage {
     advance?(winners: Teams, context: UEFAContext): UEFAContext;
 }
 
-export type Stage = LeagueStage | KnockoutStage;
+/**
+ * Small round-robin groups played in parallel (e.g. the Euro group stage).
+ */
+export interface GroupStage {
+    kind: "groups";
+    phase: Phase;
+    label: string;
+    /** Group letter -> teams in draw position order (A1, A2, A3, A4). */
+    groups: Record<string, Teams>;
+    /** Seeding pots for redrawing the groups; one team per pot per group. */
+    pots?: Teams[];
+    /** Slots that stay fixed in a redraw, e.g. the host in A1. */
+    fixedDraw?: { team: string; group: string; position: number }[];
+    /** Third-placed teams that go through, ranked across all groups. */
+    qualifyingThirds: number;
+    /** Build the next stage's context from the final group tables (best first). */
+    advance(tables: Record<string, TableRow[]>, context: UEFAContext): UEFAContext;
+}
+
+export type Stage = LeagueStage | GroupStage | KnockoutStage;
 
 /**
  * Ordered stages of a competition. The winner of the last stage's

@@ -7,6 +7,16 @@ import type {
     UEFAContext,
 } from "./interfaces/tournament.js";
 import { generateKnockoutRound } from "./utils/knockout.js";
+import { generateGroupFixtures } from "./utils/groups.js";
+import { EURO_2024_FORMAT } from "./national/euro2024.js";
+import { UEFA_FORMAT } from "./uefa/format.js";
+
+/**
+ * Format for a competition: the Euro, or the Swiss-model club cups.
+ */
+export function getFormat(competition: string): TournamentFormat {
+    return competition === "euro" ? EURO_2024_FORMAT : UEFA_FORMAT;
+}
 
 /**
  * The stage for a phase. "finished" resolves to the last stage, whose
@@ -37,5 +47,20 @@ export function generateStageFixtures(
     context: UEFAContext,
 ): Round[] {
     if (stage.kind === "league") return stage.generate(teams);
+    if (stage.kind === "groups") return generateGroupFixtures(stage.groups);
     return [generateKnockoutRound(stage.pairings(context), stage.legs)];
+}
+
+/**
+ * Copy of a format with the group stage using the given draw.
+ */
+export function withGroups(
+    format: TournamentFormat,
+    groups: Record<string, Teams>,
+): TournamentFormat {
+    return {
+        stages: format.stages.map((stage) =>
+            stage.kind === "groups" ? { ...stage, groups } : stage,
+        ),
+    };
 }

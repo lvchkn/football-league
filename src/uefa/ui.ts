@@ -3,6 +3,7 @@ import type { Round, KnockoutRound, LeagueRound } from "../interfaces/round.js";
 import type { Table, TableRow } from "../interfaces/table.js";
 import type { Phase, Stage, UEFAHistoryEntry } from "../interfaces/tournament.js";
 import { sortUEFATable } from "./table.js";
+import { groupLookup } from "../utils/groups.js";
 import { createFormCell, createTeamCell } from "../team-detail.js";
 import {
     createMatchdayActions,
@@ -33,9 +34,7 @@ export function renderUEFATable(
         return;
     }
 
-    if (standingsSection) {
-        standingsSection.style.display = "";
-    }
+    resetStandingsView();
 
     tbody.innerHTML = "";
 
@@ -76,6 +75,135 @@ export function renderUEFATable(
 
         tbody.appendChild(tr);
     });
+}
+
+/**
+ * Show the single standings table and clear any group tables, e.g. when
+ * leaving a competition or stage that used them.
+ */
+export function resetStandingsView(): void {
+    const section = document.querySelector<HTMLElement>(".standings-section");
+    const mainTable = document.getElementById("standings");
+    const groupContainer = document.getElementById("group-standings");
+
+    if (section) section.style.display = "";
+    if (mainTable) mainTable.style.display = "";
+    if (groupContainer) groupContainer.innerHTML = "";
+}
+
+const STANDINGS_HEADERS = ["#", "Team", "Played", "W", "D", "L", "GF", "GA", "GD", "Pts", "Form"];
+
+function _standingsTable(headers: string[]): { table: HTMLTableElement; tbody: HTMLTableSectionElement } {
+    const table = document.createElement("table");
+    table.className = "standings-table";
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    headers.forEach(function (header) {
+        const th = document.createElement("th");
+        th.textContent = header;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    const tbody = document.createElement("tbody");
+    table.append(thead, tbody);
+    return { table, tbody };
+}
+
+function _cell(value: string | number): HTMLTableCellElement {
+    const td = document.createElement("td");
+    td.textContent = String(value);
+    return td;
+}
+
+/**
+ * Render one table per group plus the ranking of third-placed teams.
+ * Rows currently in a qualifying position are highlighted.
+ */
+export function renderGroupTables(
+    tables: Record<string, TableRow[]>,
+    thirds: { group: string; row: TableRow }[],
+    qualifyingThirds: number,
+    fixtures: Round[],
+): void {
+    const section = document.querySelector<HTMLElement>(".standings-section");
+    const mainTable = document.getElementById("standings");
+    const container = document.getElementById("group-standings");
+    if (!container) return;
+
+    if (section) section.style.display = "";
+    if (mainTable) mainTable.style.display = "none";
+    container.innerHTML = "";
+
+    const qualifyingThirdTeams = new Set(
+        thirds.slice(0, qualifyingThirds).map((t) => t.row.team),
+    );
+
+    Object.entries(tables).forEach(function ([letter, rows]) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Group " + letter;
+
+        const { table, tbody } = _standingsTable(STANDINGS_HEADERS);
+        rows.forEach(function (row, i) {
+            const tr = document.createElement("tr");
+            if (i < 2 || (i === 2 && qualifyingThirdTeams.has(row.team))) {
+                tr.className = "qualified";
+            }
+            tr.append(
+                _cell(i + 1),
+                createTeamCell(fixtures, row.team),
+                _cell(row.played),
+                _cell(row.wins),
+                _cell(row.draws),
+                _cell(row.losses),
+                _cell(row.gf),
+                _cell(row.ga),
+                _cell(row.gf - row.ga),
+                _cell(row.points),
+                createFormCell(fixtures, row.team),
+            );
+            tbody.appendChild(tr);
+        });
+
+        container.append(heading, table);
+    });
+
+    if (qualifyingThirds > 0 && thirds.length > 0) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Third-placed teams";
+
+        const { table, tbody } = _standingsTable(["#", "Team", "Played", "W", "D", "L", "GF", "GA", "GD", "Pts"]);
+        thirds.forEach(function ({ group, row }, i) {
+            const tr = document.createElement("tr");
+            tr.className = i < qualifyingThirds ? "qualified" : "contention";
+
+            const teamCell = createTeamCell(fixtures, row.team);
+            const tag = document.createElement("span");
+            tag.className = "group-tag";
+            tag.textContent = group;
+            teamCell.appendChild(tag);
+
+            tr.append(
+                _cell(i + 1),
+                teamCell,
+                _cell(row.played),
+                _cell(row.wins),
+                _cell(row.draws),
+                _cell(row.losses),
+                _cell(row.gf),
+                _cell(row.ga),
+                _cell(row.gf - row.ga),
+                _cell(row.points),
+            );
+            tbody.appendChild(tr);
+        });
+
+        const note = document.createElement("p");
+        note.className = "standings-note";
+        note.textContent =
+            `Top two in each group and the best ${qualifyingThirds} third-placed teams reach the knockout stage.`;
+
+        container.append(heading, table, note);
+    }
 }
 
 /**
@@ -272,19 +400,22 @@ export function renderUEFAFixtures(
         div.className = "matchday";
 
         const roundLabel: string =
-            stage.kind === "league" ? "Matchday " + (i + 1) : stage.label;
+            stage.kind === "knockout" ? stage.label : "Matchday " + (i + 1);
 
         const h3 = document.createElement("h3");
         h3.textContent = roundLabel;
         div.appendChild(h3);
 
-        if (stage.kind === "league") {
+        if (stage.kind === "league" || stage.kind === "groups") {
+            const groupOf =
+                stage.kind === "groups" ? groupLookup(stage.groups) : null;
             _renderLeagueRound(
                 div,
                 round as LeagueRound,
                 i,
                 wrappedOnResultsApplied,
                 readOnly,
+                groupOf ? (match) => "Group " + groupOf(match.homeTeam) : null,
             );
         } else if (stage.legs === 2) {
             _renderKnockoutRound(
@@ -351,7 +482,7 @@ export function renderUEFAFixtures(
 
             // Knockout phases are a single round, covered by the top bar
             const actionButtons =
-                stage.kind === "league" && onSimulate
+                stage.kind !== "knockout" && onSimulate
                     ? [createSimulateRoundButton(() => onSimulate([i])), applyAllResultsButton]
                     : [applyAllResultsButton];
 
@@ -371,6 +502,7 @@ function _renderLeagueRound(
     roundIdx: number,
     onResultsApplied: (updates: MatchUpdate[]) => void,
     readOnly: boolean,
+    labelOf: ((match: Match) => string) | null = null,
 ): void {
     round.matches.forEach(function (match: Match, idx: number) {
         const matchRow: HTMLDivElement = _createMatchRow(
@@ -378,7 +510,7 @@ function _renderLeagueRound(
             roundIdx,
             idx,
             onResultsApplied,
-            null,
+            labelOf ? labelOf(match) : null,
             readOnly,
         );
 
@@ -409,6 +541,8 @@ function _renderSingleLegRound(
                 onResultsApplied,
                 readOnly,
             );
+            // Sits directly under its match instead of after a divider
+            container.lastElementChild?.classList.add("single-leg-shootout");
         }
     });
 }

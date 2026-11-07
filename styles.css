@@ -84,7 +84,7 @@ table {
     table-layout: fixed;
 }
 
-#standings {
+.standings-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
@@ -92,7 +92,7 @@ table {
 }
 
 /* Sticky header: the container that scrolls is .standings-section */
-#standings thead th {
+.standings-table thead th {
     position: sticky;
     top: 0;
     background: #f1f5f9;
@@ -100,8 +100,8 @@ table {
     border-bottom: 2px solid #e2e8f0;
 }
 
-#standings th,
-#standings td {
+.standings-table th,
+.standings-table td {
     padding: 8px 6px;
     overflow-wrap: anywhere;
     border: none;
@@ -110,28 +110,28 @@ table {
     font-size: 13px;
 }
 
-#standings th:nth-child(1),
-#standings td:nth-child(1) {
+.standings-table th:nth-child(1),
+.standings-table td:nth-child(1) {
     width: 30px;
 }
 
-#standings th:nth-child(2),
-#standings td:nth-child(2) {
+.standings-table th:nth-child(2),
+.standings-table td:nth-child(2) {
     width: 120px;
 }
 
-#standings th:nth-child(n + 3),
-#standings td:nth-child(n + 3) {
+.standings-table th:nth-child(n + 3),
+.standings-table td:nth-child(n + 3) {
     width: 50px;
 }
 
-#standings th:nth-child(n + 4),
-#standings td:nth-child(n + 4) {
+.standings-table th:nth-child(n + 4),
+.standings-table td:nth-child(n + 4) {
     width: 38px;
 }
 
-#standings th:nth-child(11),
-#standings td:nth-child(11) {
+.standings-table th:nth-child(11),
+.standings-table td:nth-child(11) {
     width: 86px;
 }
 
@@ -236,8 +236,8 @@ button.team-detail-close:hover {
     table-layout: auto;
 }
 
-.team-detail table:not(#standings) th,
-.team-detail table:not(#standings) td {
+.team-detail table:not(.standings-table) th,
+.team-detail table:not(.standings-table) td {
     font-size: 13px;
     padding: 6px;
 }
@@ -246,9 +246,9 @@ button.team-detail-close:hover {
     color: #64748b;
 }
 
-/* Scope general table cell styles to tables other than #standings */
-table:not(#standings) th,
-table:not(#standings) td {
+/* Scope general table cell styles to tables other than .standings-table */
+table:not(.standings-table) th,
+table:not(.standings-table) td {
     border: none;
     border-bottom: 1px solid #f1f5f9;
     padding: 8px 6px;
@@ -262,8 +262,8 @@ th {
     font-weight: 600;
 }
 
-#standings tbody tr:hover,
-table:not(#standings) tbody tr:hover {
+.standings-table tbody tr:hover,
+table:not(.standings-table) tbody tr:hover {
     background-color: #f8fafc;
     transition: background-color 0.2s ease;
 }
@@ -419,24 +419,24 @@ button.simulate-btn:hover {
         font-size: 12px;
     }
 
-    #standings th,
-    #standings td {
+    .standings-table th,
+    .standings-table td {
         padding: 3px 4px;
         font-size: 11px;
     }
 
-    #standings th:nth-child(2),
-    #standings td:nth-child(2) {
+    .standings-table th:nth-child(2),
+    .standings-table td:nth-child(2) {
         width: 80px;
     }
 
-    #standings th:nth-child(n + 3),
-    #standings td:nth-child(n + 3) {
+    .standings-table th:nth-child(n + 3),
+    .standings-table td:nth-child(n + 3) {
         width: 40px;
     }
 
-    #standings th:nth-child(11),
-    #standings td:nth-child(11) {
+    .standings-table th:nth-child(11),
+    .standings-table td:nth-child(11) {
         width: 80px;
     }
 
@@ -619,4 +619,42 @@ button:focus-visible {
 
 .phase-buttons button:active {
     transform: translateY(0);
+}
+
+/* Group stage: one compact table per group plus the third-placed ranking */
+#group-standings h3 {
+    margin: 18px 0 6px;
+    font-size: 15px;
+}
+
+#group-standings h3:first-child {
+    margin-top: 0;
+}
+
+.standings-table .qualified {
+    background-color: rgba(0, 180, 80, 0.12);
+}
+
+.standings-table .contention {
+    background-color: rgba(255, 165, 0, 0.1);
+}
+
+.group-tag {
+    color: #64748b;
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+.standings-note {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.penalty-shootout.single-leg-shootout {
+    margin: -4px 0 10px;
+    padding: 0 0 10px;
+    border-top: none;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.95em;
 }
