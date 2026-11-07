@@ -13,6 +13,8 @@ import { getRosterVersionByLeague, getTeamsByLeague } from "./teams.js";
 import { renderFixtures, renderTable } from "./ui.js";
 import { generateFixtures } from "./fixtures.js";
 import { shuffleArray } from "../utils/shuffle.js";
+import { equalRatings, simulateLeagueRounds } from "../utils/simulation.js";
+import { collectTypedResults, syncScoreInputs } from "../simulation-controls.js";
 
 /**
  * Create a domestic league app for the given league.
@@ -122,7 +124,26 @@ export function createDomesticApp(selectedLeague: LeagueList): CompetitionApp {
             );
         };
 
-        renderFixtures(fixtures, onResultsApplied);
+        renderFixtures(fixtures, onResultsApplied, simulate);
+    }
+
+    /**
+     * Fill unplayed matches in the given rounds with simulated scores.
+     */
+    function simulate(roundIndices: number[]): void {
+        const updates = [
+            ...collectTypedResults(fixtures, roundIndices),
+            ...simulateLeagueRounds(fixtures, roundIndices, equalRatings),
+        ];
+        if (updates.length === 0) return;
+
+        syncScoreInputs(fixtures, roundIndices);
+        updateTableIncrementally(updates);
+        storage.setFixturesDebounced(
+            fixtures,
+            league,
+            getRosterVersionByLeague(league),
+        );
     }
 
     function init(): void {

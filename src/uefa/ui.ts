@@ -4,6 +4,11 @@ import type { Table, TableRow } from "../interfaces/table.js";
 import type { Phase, UEFAHistoryEntry } from "../interfaces/tournament.js";
 import { sortUEFATable } from "./table.js";
 import { createFormCell, createTeamCell } from "../team-detail.js";
+import {
+    createMatchdayActions,
+    createSimulateAllBar,
+    createSimulateRoundButton,
+} from "../simulation-controls.js";
 
 /**
  * Human-readable label for each UEFA phase.
@@ -242,6 +247,7 @@ export function renderUEFAFixtures(
     onResultsApplied: (updates: MatchUpdate[]) => void,
     phase: Phase,
     readOnly = false,
+    onSimulate?: (roundIndices: number[]) => void,
 ) {
     phase = phase || "league";
     const container: HTMLElement | null = document.getElementById("fixtures");
@@ -257,6 +263,12 @@ export function renderUEFAFixtures(
         (PHASE_LABELS[phase] || phase);
     banner.appendChild(strong);
     container.appendChild(banner);
+
+    if (!readOnly && onSimulate) {
+        container.appendChild(
+            createSimulateAllBar(() => onSimulate(fixtures.map((_, i) => i))),
+        );
+    }
 
     const isKnockout: boolean = phase !== "league";
 
@@ -364,7 +376,13 @@ export function renderUEFAFixtures(
                 wrappedOnResultsApplied(updates);
             });
 
-            div.appendChild(applyAllResultsButton);
+            // Knockout phases are a single round, covered by the top bar
+            const actionButtons =
+                phase === "league" && onSimulate
+                    ? [createSimulateRoundButton(() => onSimulate([i])), applyAllResultsButton]
+                    : [applyAllResultsButton];
+
+            div.appendChild(createMatchdayActions(...actionButtons));
         }
 
         container.appendChild(div);

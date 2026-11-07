@@ -289,6 +289,34 @@ table:not(#standings) tbody tr:hover {
     margin: 15px auto 0;
 }
 
+.matchday-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.matchday-actions .apply-all-btn {
+    margin: 0;
+}
+
+.simulate-bar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+button.simulate-btn {
+    background-color: #ffffff;
+    color: #6d28d9;
+    border: 1px solid #8b5cf6;
+}
+
+button.simulate-btn:hover {
+    background-color: #f5f3ff;
+}
+
 .match {
     margin: 6px 0;
     display: flex;

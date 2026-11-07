@@ -27,6 +27,13 @@ import {
 } from "./table.js";
 import { computeRosterVersion } from "../utils/roster-version.js";
 import { shuffleArray } from "../utils/shuffle.js";
+import {
+    ratingsFromSeeding,
+    simulateLeagueRounds,
+    simulateSingleMatchTie,
+    simulateTwoLegTies,
+} from "../utils/simulation.js";
+import { collectTypedResults, syncScoreInputs } from "../simulation-controls.js";
 
 function getUefaRosterVersion(competition: UEFACompetition): string | null {
     return computeRosterVersion(getUEFATeams(competition));
@@ -207,6 +214,7 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
             onResultsApplied,
             displayedPhase,
             readOnly,
+            simulate,
         );
 
         renderUEFAHistoryControls(
@@ -227,6 +235,47 @@ export function createUEFAApp(selectedComp: UEFACompetition): CompetitionApp {
             renderPhaseProgressionButtons(function () {
                 progressPhase();
             });
+        }
+    }
+
+    /**
+     * Fill unplayed matches of the current phase with simulated scores.
+     * Knockout ties that end level are settled with a simulated shootout.
+     */
+    function simulate(roundIndices: number[]): void {
+        if (viewedHistoryPhase || currentUEFAPhase === "finished") return;
+
+        const rounds = fixtures as Round[];
+        const ratingOf = ratingsFromSeeding(getUEFATeams(competition));
+        const typed = collectTypedResults(rounds, roundIndices);
+
+        let simulated: MatchUpdate[];
+        if (currentUEFAPhase === "league") {
+            simulated = simulateLeagueRounds(rounds, roundIndices, ratingOf);
+        } else if (currentUEFAPhase === "final") {
+            const finalMatch = rounds[0]?.matches[0];
+            simulated = finalMatch
+                ? simulateSingleMatchTie(finalMatch, ratingOf)
+                : [];
+        } else {
+            simulated = simulateTwoLegTies(rounds[0]?.matches ?? [], ratingOf);
+        }
+
+        const updates = [...typed, ...simulated];
+        if (updates.length === 0) return;
+
+        updateTableIncrementally(updates);
+        uefaStorage.setFixturesDebounced(
+            rounds,
+            competition,
+            getUefaRosterVersion(competition),
+        );
+
+        if (currentUEFAPhase === "league") {
+            syncScoreInputs(rounds, roundIndices);
+        } else {
+            // Re-render to show aggregates and penalty shootouts
+            renderAllFixtures();
         }
     }
 
